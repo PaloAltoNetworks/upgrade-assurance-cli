@@ -1,0 +1,87 @@
+{
+    "global_jumbo_frame": {
+        "state": false,
+        "status": "SKIPPED",
+        "reason": "Missing desired mode for global jumbo frame."
+    },
+    "active_support": {
+        "state": true,
+        "status": "SUCCESS",
+        "reason": ""
+    },
+    "free_disk_space": {
+        "state": true,
+        "status": "SUCCESS",
+        "reason": ""
+    },
+    "ip_sec_tunnel_status": {
+        "state": false,
+        "status": "SKIPPED",
+        "reason": "Missing tunnel specification."
+    },
+    "dynamic_updates": {
+        "state": false,
+        "status": "FAIL",
+        "reason": "Following schedules fall into test window: anti-virus (every hour), wildfire (every hour)."
+    },
+    "ntp_sync": {
+        "state": true,
+        "status": "SUCCESS",
+        "reason": ""
+    },
+    "session_exist": {
+        "state": false,
+        "status": "SKIPPED",
+        "reason": "Missing critical session description. Failing check."
+    },
+    "dp_cpu_utilization": {
+        "state": true,
+        "status": "SUCCESS",
+        "reason": ""
+    },
+    "mp_cpu_utilization": {
+        "state": true,
+        "status": "SUCCESS",
+        "reason": ""
+    },
+    "arp_entry_exist": {
+        "state": false,
+        "status": "SKIPPED",
+        "reason": "Missing ARP table entry description."
+    },
+    "expired_licenses": {
+        "state": true,
+        "status": "SUCCESS",
+        "reason": ""
+    },
+    "candidate_config": {
+        "state": false,
+        "status": "FAIL",
+        "reason": "Pending changes found on device."
+    },
+    "ha": {
+        "state": false,
+        "status": "FAIL",
+        "reason": "Peer device is not in active or passive state."
+    },
+    "panorama": {
+        "state": false,
+        "status": "FAIL",
+        "reason": "Device not connected to Panorama."
+    },
+    "certificates_requirements": {
+        "state": false,
+        "status": "SKIPPED",
+        "reason": "No certificates installed on device."
+    },
+    "content_version": {
+        "state": false,
+        "status": "FAIL",
+        "reason": "Installed content DB version (9077-9933) is not the latest one (9079-9940)."
+    },
+    "jobs": {
+        "state": true,
+        "status": "SUCCESS",
+        "reason": ""
+    }
+}

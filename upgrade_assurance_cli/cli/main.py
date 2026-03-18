@@ -5,7 +5,9 @@ import os
 from typing import Annotated
 
 from typer import Typer, Argument, Option
+from rich import print, table
 
+from upgrade_assurance_cli.cli.report import generate_reports_from_store
 from upgrade_assurance_cli.cli.runner import pooled_run_readiness_checks_on_devices, \
     ReadinessCheckExecutionArgs
 from upgrade_assurance_cli.cli.utils import log, load_config
@@ -59,24 +61,31 @@ def readiness(
         config_path: CONFIG_OPTION = None,
         parallel: Annotated[int, Option(help="Number of concurrent connections to make")] = 2
 ):
-    """Runs the 'readiness' or pre-check upgrade commands"""
+    """Runs the 'readiness' or pre-check upgrade commands
+
+    This command will generate a consolidated report and print it to the console. For more complex reporting behavior,
+    use the `report` command.
+    """
     check_config = load_config(config_path).get("pre_checks", {})
     if not check_config:
         log.warning("No explicit readiness checks were given, using library defaults")
 
     os.makedirs(result_store_path, exist_ok=True)
+    timestamp = int(datetime.datetime.now(tz=datetime.UTC).timestamp())
     exec_args = [
         ReadinessCheckExecutionArgs(
             username=username,
             password=password,
             hostname=d,
             check_configuration=check_config,
-            output_file=result_store_path.joinpath(f"readiness_{d}.json".replace(":", "_")),
-            serial=None
+            output_file=result_store_path.joinpath(
+                f"readiness_{d}_{timestamp}.json".replace(":", "-")
+            ),
         ) for d in device
     ]
     pooled_run_readiness_checks_on_devices(exec_args, parallel=parallel)
-
+    reports = generate_reports_from_store(result_store_path)
+    print(reports.counts_as_rich_table())
 
 @app.command()
 def snapshot():

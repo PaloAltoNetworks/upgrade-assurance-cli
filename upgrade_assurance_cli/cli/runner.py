@@ -32,7 +32,6 @@ class ReadinessCheckExecutionArgs:
             username,
             password,
             hostname,
-            serial,
             check_configuration,
             output_file
     ):
@@ -41,15 +40,10 @@ class ReadinessCheckExecutionArgs:
         self.username = username
         self.password = password
         self.hostname = hostname
-        self.serial = serial
 
     @property
     def device_str(self):
-        serial = ""
-        if self.serial:
-            serial = "_"+self.serial
-
-        return f"{self.hostname}{serial}"
+        return f"{self.hostname}".replace(":", "-")
 
 def run_readiness_checks_on_device(exec_arguments: ReadinessCheckExecutionArgs):
     try:

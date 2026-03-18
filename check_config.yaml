@@ -1,2 +1,2 @@
 pre_checks:
-  - "!planes_clock_sync"
+  - "ntp_sync"
