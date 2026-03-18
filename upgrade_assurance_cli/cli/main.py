@@ -9,7 +9,7 @@ from rich import print, table
 
 from upgrade_assurance_cli.cli.report import generate_reports_from_store
 from upgrade_assurance_cli.cli.runner import pooled_run_readiness_checks_on_devices, \
-    ReadinessCheckExecutionArgs
+    CheckExecutionArgs, pooled_run_snapshot_checks_on_devices
 from upgrade_assurance_cli.cli.utils import log, load_config, parse_file_to_devices
 
 SHORT_HELP_TEXT = """PAN-OS Upgrade Assurance CLI"""
@@ -68,6 +68,13 @@ def report(
         print(reports.counts_as_rich_table())
         print(reports.pass_or_fail_as_rich_string())
 
+def get_devices_from_argument(device: list[str]):
+    device_list = []
+    for d in device:
+        if pathlib.Path(d).is_file():
+            device_list += parse_file_to_devices(pathlib.Path(d))
+
+    return device_list
 
 @app.command()
 def readiness(
@@ -87,16 +94,13 @@ def readiness(
     if not check_config:
         log.warning("No explicit readiness checks were given, using library defaults")
 
-    device_list = []
-    for d in device:
-        if pathlib.Path(d).is_file():
-            device_list += parse_file_to_devices(pathlib.Path(d))
+    device_list = get_devices_from_argument(device)
 
     os.makedirs(result_store_path, exist_ok=True)
     timestamp = int(datetime.datetime.now(tz=datetime.UTC).timestamp())
     log.info(f"Starting readiness check process on {len(device_list)} devices")
     exec_args = [
-        ReadinessCheckExecutionArgs(
+        CheckExecutionArgs(
             username=username,
             password=password,
             hostname=d,
@@ -111,6 +115,45 @@ def readiness(
     print(reports.counts_as_rich_table())
 
 @app.command()
-def snapshot():
-    """Takes an operational snapshot"""
-    pass
+def snapshot(
+        username: USERNAME_OPTION,
+        password: PASSWORD_OPTION,
+        device: DEVICE_ARGUMENT,
+        snapshot_store_path: Annotated[pathlib.Path, Option(help="Path to store the snapshot reports")] = "snapshots",
+        config_path: CONFIG_OPTION = None,
+        parallel: Annotated[int, Option(help="Number of concurrent connections to make")] = 2
+):
+    """Takes an operational snapshot of the given devices.
+
+    For each device passed, a snapshot will be taken and saved in the passed snapshot store. This can be then used to
+    compare with subsequent snapshots. This command does NOT run any tests, it just pulls the data for later
+    processing.
+    """
+    check_config = load_config(config_path).get("snapshots", {})
+    if not check_config:
+        check_config = [
+            'nics',
+            'routes',
+            'license',
+            'arp_table',
+        ]
+        log.warning("No explicit snapshot config was given, using library defaults")
+
+    os.makedirs(snapshot_store_path, exist_ok=True)
+
+    device_list = get_devices_from_argument(device)
+    timestamp = int(datetime.datetime.now(tz=datetime.UTC).timestamp())
+
+    exec_args = [
+        CheckExecutionArgs(
+            username=username,
+            password=password,
+            hostname=d,
+            check_configuration=check_config,
+            output_file=snapshot_store_path.joinpath(
+                f"snapshot_{d}_{timestamp}.json".replace(":", "-")
+            ),
+        ) for d in device_list
+    ]
+    pooled_run_snapshot_checks_on_devices(exec_args, parallel=parallel)
+    log.info("snapshot process has finished.")
