@@ -61,12 +61,21 @@ class FormatEnum(str, enum.Enum):
 def report(
         result_store_path: Annotated[pathlib.Path, Option(help="Location of the results")] = "store",
         format: Annotated[FormatEnum, Option(help="Format for the report")] = FormatEnum.cli_table,
+        device: Annotated[str, Option(help="Single device report")] = None
 ):
-    """Read all the check results and generate a report."""
+    """Read all the check results and generate a report.
+
+    If you store contains multiple reports, and you have passed a device string, this will return the most recent
+    check results.
+    """
     reports = generate_reports_from_store(result_store_path)
+
     if format == FormatEnum.cli_table:
-        print(reports.counts_as_rich_table())
-        print(reports.pass_or_fail_as_rich_string())
+        if device:
+            print(reports.device_report_as_rich_table(device))
+        else:
+            print(reports.counts_as_rich_table())
+            print(reports.pass_or_fail_as_rich_string())
 
 def get_devices_from_argument(device: list[str]):
     device_list = []
