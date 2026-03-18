@@ -8,6 +8,9 @@ from rich.table import Table
 class ReportTypeEnum(str, enum.Enum):
     readiness = "readiness"
 
+class BadDeviceStringException(Exception):
+    pass
+
 class CheckReport:
     def __init__(
             self,
@@ -29,6 +32,24 @@ class CheckReport:
     @property
     def count_passed_checks(self) -> int:
         return len([k for k, v in self.report.items() if v.get("state")])
+
+    def checks_as_table(self):
+        table = [
+            [
+                "check_name",
+                "passed",
+                "check_status",
+                "reason"
+            ]
+        ]
+        for k, check in self.report.items():
+            table.append([
+                k,
+                check["state"],
+                check["status"],
+                check["reason"]
+            ])
+        return table
 
 class CheckReports:
     def __init__(self):
@@ -92,6 +113,29 @@ class CheckReports:
                     report.count_passed_checks
                 ]
             )
+        return table
+
+    def get_latest_report_by_device(self, device_str: str):
+        sorted_devices = sorted([d for d in self.reports if d.device == device_str], key=lambda d: d.timestamp, reverse=True)
+        if not sorted_devices:
+            raise BadDeviceStringException(f"device {device_str} not found.")
+
+        return sorted_devices[0]
+
+    def device_report_as_rich_table(self, device_str: str):
+        report = self.get_latest_report_by_device(device_str)
+        list_table = report.checks_as_table()
+        table = Table(caption=f"Checks were ran at {report.datetime.isoformat()}")
+        for c in list_table[0]:
+            table.add_column(c)
+
+        for r in list_table[1:]:
+            style = "green"
+            if not r[1]:
+                style = "bold red"
+            new_row_items = [str(i) for i in r]
+            table.add_row(*new_row_items, style=style)
+
         return table
 
 def generate_reports_from_store(store_path: pathlib.Path):
