@@ -2,6 +2,8 @@ import json
 import pathlib
 import enum
 import datetime
+import sys
+
 from rich.table import Table
 class ReportTypeEnum(str, enum.Enum):
     readiness = "readiness"
@@ -35,6 +37,26 @@ class CheckReports:
     def add_report(self, report: CheckReport):
         self.reports.append(report)
 
+    @property
+    def failed_reports(self):
+        return [r for r in self.reports if r.count_failed_checks > 0]
+
+    @property
+    def passed_reports(self):
+        return [r for r in self.reports if r.count_failed_checks == 0]
+
+    def exit_by_status(self):
+        if self.failed_reports:
+            sys.exit(1)
+
+        sys.exit(0)
+
+    def pass_or_fail_as_rich_string(self):
+        if len(self.failed_reports) > 0:
+            return "[red]❌ Some devices failed checks![/red]"
+
+        return "✅ All devices passed."
+
     def counts_as_rich_table(self):
         list_table = self.counts_as_table()
         table = Table()
@@ -42,8 +64,12 @@ class CheckReports:
             table.add_column(c)
 
         for r in list_table[1:]:
+            failed_count = r[2]
+            style = "green"
+            if failed_count > 0:
+                style = "bold red"
             new_row_items = [str(i) for i in r]
-            table.add_row(*new_row_items)
+            table.add_row(*new_row_items, style=style)
 
         return table
 

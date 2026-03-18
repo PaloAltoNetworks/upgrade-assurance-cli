@@ -54,6 +54,21 @@ def setup(
     log.debug("Debug logging enabled")
     log.info("Informational logging enabled")
 
+class FormatEnum(str, enum.Enum):
+    cli_table = "cli_table"
+
+@app.command()
+def report(
+        result_store_path: Annotated[pathlib.Path, Option(help="Location of the results")] = "store",
+        format: Annotated[FormatEnum, Option(help="Format for the report")] = FormatEnum.cli_table,
+):
+    """Read all the check results and generate a report."""
+    reports = generate_reports_from_store(result_store_path)
+    if format == FormatEnum.cli_table:
+        print(reports.counts_as_rich_table())
+        print(reports.pass_or_fail_as_rich_string())
+
+
 @app.command()
 def readiness(
         username: USERNAME_OPTION,
