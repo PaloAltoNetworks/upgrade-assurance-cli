@@ -10,7 +10,7 @@ from rich import print, table
 from upgrade_assurance_cli.cli.report import generate_reports_from_store
 from upgrade_assurance_cli.cli.runner import pooled_run_readiness_checks_on_devices, \
     ReadinessCheckExecutionArgs
-from upgrade_assurance_cli.cli.utils import log, load_config
+from upgrade_assurance_cli.cli.utils import log, load_config, parse_file_to_devices
 
 SHORT_HELP_TEXT = """PAN-OS Upgrade Assurance CLI"""
 
@@ -25,7 +25,9 @@ app = Typer(
 )
 
 DEVICE_ARGUMENT = Annotated[list[str], Argument(
-    help="Device IP or FQDN. If using Panorama to proxy commands, specify in the format <panorama_ip>:<serial>",
+    help="Device IP or FQDN. If using Panorama to proxy commands, specify in the format <panorama_ip>:<serial>. "
+         "Multiple are supported at the command line. "
+         "Alternatively, a path to a file containing a list of devices - one per line - may be passed.",
 )]
 USERNAME_OPTION = Annotated[str, Option(
     help="Username",
@@ -70,8 +72,14 @@ def readiness(
     if not check_config:
         log.warning("No explicit readiness checks were given, using library defaults")
 
+    device_list = []
+    for d in device:
+        if pathlib.Path(d).is_file():
+            device_list += parse_file_to_devices(pathlib.Path(d))
+
     os.makedirs(result_store_path, exist_ok=True)
     timestamp = int(datetime.datetime.now(tz=datetime.UTC).timestamp())
+    log.info(f"Starting readiness check process on {len(device_list)} devices")
     exec_args = [
         ReadinessCheckExecutionArgs(
             username=username,
@@ -81,7 +89,7 @@ def readiness(
             output_file=result_store_path.joinpath(
                 f"readiness_{d}_{timestamp}.json".replace(":", "-")
             ),
-        ) for d in device
+        ) for d in device_list
     ]
     pooled_run_readiness_checks_on_devices(exec_args, parallel=parallel)
     reports = generate_reports_from_store(result_store_path)

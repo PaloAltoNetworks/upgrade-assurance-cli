@@ -11,7 +11,6 @@ def get_firewall_proxy_from_args(username: str, password: str, device: str):
     d = device.split(":")
     if len(d) == 2:
         panorama, firewall_serial = d
-        log.info(f"Using panorama {panorama} and serial {firewall_serial}")
         return FirewallProxy(
             hostname=panorama,
             api_username=username,
@@ -55,6 +54,7 @@ def run_readiness_checks_on_device(exec_arguments: ReadinessCheckExecutionArgs):
 
         fileLog = logging.getLogger(exec_arguments.device_str)
         fileLog.addHandler(logging.FileHandler(f"{exec_arguments.device_str}.log"))
+        fileLog.propagate = False
 
         check_configuration = exec_arguments.check_configuration
         output_file = exec_arguments.output_file

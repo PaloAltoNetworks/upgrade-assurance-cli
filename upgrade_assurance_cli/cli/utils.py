@@ -28,3 +28,8 @@ def load_config(fp: pathlib.Path):
         except json.JSONDecodeError as e:
             log.critical("Could not load check config!")
             raise
+
+
+def parse_file_to_devices(fp: pathlib.Path):
+    with open(fp) as fh:
+        return [l.strip() for l in fh.read().splitlines()]
