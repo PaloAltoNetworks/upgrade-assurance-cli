@@ -34,10 +34,12 @@ DEVICE_ARGUMENT = Annotated[list[str], Argument(
 USERNAME_OPTION = Annotated[str, Option(
     help="Username",
     envvar="UA_USERNAME",
+    prompt="username"
 )]
 PASSWORD_OPTION = Annotated[str, Option(
     envvar="UA_PASSWORD",
     help="Password",
+    prompt="password"
 )]
 CONFIG_OPTION = Annotated[pathlib.Path, Option(
     help="Path To Configuration file",
@@ -158,7 +160,7 @@ def snapshot(
     compare with subsequent snapshots. This command does NOT run any tests, it just pulls the data for later
     processing.
     """
-    check_config = load_config(config_path).get("snapshots", {})
+    check_config = load_config(config_path).get("snapshot_config", {})
     if not check_config:
         check_config = [
             'nics',
@@ -186,11 +188,11 @@ def snapshot(
         ) for d in device_list
     ]
     pooled_run_snapshot_checks_on_devices(exec_args, parallel=parallel)
-    log.info("snapshot process has finished.")
+    log.info(f"snapshot process has finished. Snapshots saved to {snapshot_store_path}")
 
 
 @app.command()
-def snapshot_comparison(
+def compare_snapshots(
         left: Annotated[pathlib.Path, Argument(help="First snapshot")],
         right: Annotated[pathlib.Path, Argument(help="Second snapshot")],
         config_path: CONFIG_OPTION = None,
@@ -198,7 +200,7 @@ def snapshot_comparison(
 ):
     """Compares the result of two given snapshots and creates a report that can then be read using the 'reports'
     command."""
-    report_config = load_config(config_path).get("snapshot_config", {})
+    report_config = load_config(config_path).get("snapshot_comparison_config", {})
     os.makedirs(result_store_path, exist_ok=True)
 
     if not report_config:
@@ -238,5 +240,5 @@ def snapshot_comparison(
             f"snapshotr_{right_device}_{right_timestamp}.json".replace(":", "-")
         )
         result = comparison.compare_snapshots(report_config)
-        log.info(f"Saving result to {output_file}")
+        log.info(f"Saving snapshot comparison result to {output_file}. Use the `report` command to view.")
         json.dump(result, open(output_file, "w", encoding=ENCODING))

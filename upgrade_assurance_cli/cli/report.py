@@ -174,7 +174,7 @@ class CheckReports:
                 "passed_checks_count"
             ]
         ]
-        for report in self.reports:
+        for report in self.sorted_reports:
             table.append(
                 [
                     report.datetime.isoformat(),
@@ -185,6 +185,10 @@ class CheckReports:
                 ]
             )
         return table
+
+    @property
+    def sorted_reports(self):
+        return sorted(self.reports, key=lambda d: d.timestamp)
 
     def get_latest_report_by_device(self, device_str: str, reports: list):
         sorted_reports = sorted([d for d in reports if d.device == device_str], key=lambda d: d.timestamp,
