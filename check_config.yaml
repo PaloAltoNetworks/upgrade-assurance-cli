@@ -1,2 +1,7 @@
 pre_checks:
   - "ntp_sync"
+  - "!session_exist"
+snapshot_reports:
+  - "arp"
+  - "routes"
+  - "are_routes"
