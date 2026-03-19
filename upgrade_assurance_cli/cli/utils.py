@@ -46,11 +46,19 @@ DEFAULT_SNAPSHOT_COMPARISON_CONFIG = [
 ]
 
 DEFAULT_READINESS_CHECKS = [
-    "!planes_clock_sync",
-    "!certificates_requirements",
-    "!arp_entry_exist",
-    "!session_exist",
-    "!ip_sec_tunnel_status"
+    "environmentals",
+    "ha",
+    "ntp_sync",
+    "candidate_config",
+    "expired_licenses",
+    "active_support",
+    "free_disk_space",
+    "certificates_requirements",
+    "dynamic_updates",
+    "jobs",
+    "global_jumbo_frame",
+    "dp_cpu_utilization",
+    "mp_cpu_utilization"
 ]
 
 
