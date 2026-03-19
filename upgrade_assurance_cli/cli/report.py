@@ -5,8 +5,11 @@ import datetime
 import sys
 
 from rich.table import Table
+from panos_upgrade_assurance.snapshot_compare import SnapshotCompare
+
 class ReportTypeEnum(str, enum.Enum):
     readiness = "readiness"
+    snapshot = "snapshotr"
 
 class BadDeviceStringException(Exception):
     pass
@@ -33,6 +36,16 @@ class CheckReport:
     def count_passed_checks(self) -> int:
         return len([k for k, v in self.report.items() if v.get("state")])
 
+    @staticmethod
+    def calc_change_reason_from_snapshot_report(result: dict):
+        failed_list = []
+        for check_type, check_result in result.items():
+            if isinstance(check_result, dict):
+                if not check_result.get("passed"):
+                    failed_list.append(check_type)
+
+        return ", ".join(failed_list)
+
     def checks_as_table(self):
         table = [
             [
@@ -43,11 +56,23 @@ class CheckReport:
             ]
         ]
         for k, check in self.report.items():
+            # If this is a snapshot test
+
+            if "state" not in check:
+                # If this is a snapshot comparison
+                state = check.get("passed")
+                reason = f"Failed: {self.calc_change_reason_from_snapshot_report(check)}"
+                status = ""
+            else:
+                state = check["state"]
+                status = check["status"]
+                reason = check["reason"]
+
             table.append([
                 k,
-                check["state"],
-                check["status"],
-                check["reason"]
+                state,
+                status,
+                reason
             ])
         return table
 
@@ -94,7 +119,6 @@ class CheckReports:
 
         return table
 
-
     def counts_as_table(self) -> list[list[str | int]]:
         table = [
             [
@@ -138,6 +162,12 @@ class CheckReports:
 
         return table
 
+def details_from_filename(filename: str) -> tuple[str, str, str]:
+    """Gets the device name, the check type and the timestamp based on the filename."""
+    filename = filename.replace(".json", "")
+    check_type, device, timestamp = filename.split("_")
+    return check_type, device, timestamp
+
 def generate_reports_from_store(store_path: pathlib.Path):
     """Returns the completed readiness check report based on the generated check results in
     the store path"""
@@ -146,12 +176,12 @@ def generate_reports_from_store(store_path: pathlib.Path):
     file: pathlib.Path
     for file in store_path.iterdir():
         if file.is_file() and file.suffix == '.json':
-            filename = file.name.replace(".json", "")
-            check_type, device, timestamp = filename.split("_")
+            check_type, device, timestamp = details_from_filename(file.name)
             report = CheckReport(
                 timestamp=timestamp,
                 device=device,
                 report=json.load(open(file)),
+                report_type=ReportTypeEnum(check_type)
             )
             reports.add_report(report)
 

@@ -55,7 +55,15 @@ def setup_for_checks(exec_arguments: CheckExecutionArgs):
     )
 
     fileLog = logging.getLogger(exec_arguments.device_str)
-    fileLog.addHandler(logging.FileHandler(f"{exec_arguments.device_str}.log"))
+    file_handler = logging.FileHandler(
+        f"{exec_arguments.device_str}.log"
+    )
+    file_handler.setFormatter(
+        logging.Formatter(
+            fmt="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+        )
+    )
+    fileLog.addHandler(file_handler)
     fileLog.propagate = False
 
     fileLog.info(f"{exec_arguments.device_str} - Running readiness checks on device ")
