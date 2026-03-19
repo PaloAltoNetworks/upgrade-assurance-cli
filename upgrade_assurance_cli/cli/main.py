@@ -5,14 +5,16 @@ import pathlib
 import os
 from typing import Annotated
 
+from panos_upgrade_assurance.check_firewall import CheckFirewall
 from panos_upgrade_assurance.snapshot_compare import SnapshotCompare
+from panos_upgrade_assurance.utils import ConfigParser
 from typer import Typer, Argument, Option
 from rich import print, table
 
 from upgrade_assurance_cli.cli.report import generate_reports_from_store, details_from_filename
 from upgrade_assurance_cli.cli.runner import pooled_run_readiness_checks_on_devices, \
     CheckExecutionArgs, pooled_run_snapshot_checks_on_devices
-from upgrade_assurance_cli.cli.utils import log, load_config, parse_file_to_devices, ENCODING
+from upgrade_assurance_cli.cli.utils import log, load_config, parse_file_to_devices, ENCODING, TestConfigs
 
 SHORT_HELP_TEXT = """PAN-OS Upgrade Assurance CLI"""
 
@@ -113,16 +115,7 @@ def readiness(
     This command will generate a consolidated report and print it to the console. For more complex reporting behavior,
     use the `report` command.
     """
-    check_config = load_config(config_path).get("pre_checks", {})
-    if not check_config:
-        check_config = [
-            "!planes_clock_sync",
-            "!certificates_requirements",
-            "!arp_entry_exist",
-            "!session_exist",
-            "!ip_sec_tunnel_status"
-        ]
-        log.warning("No explicit readiness checks were given, using library defaults")
+    check_config = load_config(config_path).get("pre_checks")
 
     device_list = get_devices_from_argument(device)
 
@@ -160,16 +153,7 @@ def snapshot(
     compare with subsequent snapshots. This command does NOT run any tests, it just pulls the data for later
     processing.
     """
-    check_config = load_config(config_path).get("snapshot_config", {})
-    if not check_config:
-        check_config = [
-            'nics',
-            'routes',
-            'license',
-            'arp_table',
-            'session_stats'
-        ]
-        log.warning("No explicit snapshot config was given, using library defaults")
+    check_config = load_config(config_path).snapshot_config
 
     os.makedirs(snapshot_store_path, exist_ok=True)
 
@@ -200,45 +184,54 @@ def compare_snapshots(
 ):
     """Compares the result of two given snapshots and creates a report that can then be read using the 'reports'
     command."""
-    report_config = load_config(config_path).get("snapshot_comparison_config", {})
+    report_config = load_config(config_path).snapshot_comparison_config
+
     os.makedirs(result_store_path, exist_ok=True)
+    left_data = json.load(open(left))
+    right_data = json.load(open(right))
+    comparison = SnapshotCompare(left_data, right_data)
 
-    if not report_config:
-        report_config = [
-            {
-                'arp_table': {
-                    'properties': ['!ttl'],
-                    'count_change_threshold': 10
-                }
-            },
-            {
-                'routes': {
-                    'properties': ['!flags'],
-                    'count_change_threshold': 10
-                }
-            },
-            {
-                'session_stats': {}
+    (_, left_device, left_timestamp) = details_from_filename(str(left))
+    (_, right_device, right_timestamp) = details_from_filename(str(right))
+    if left_device != right_device:
+        log.error(f"{left_device} is not the same as {right_device} - are you comparing the right reports?")
 
-            },
-            {
-                'license': {}
-            }
-        ]
-        log.warn("No config for comparison was provided - using defaults")
+    output_file = result_store_path.joinpath(
+        f"snapshotr_{right_device}_{right_timestamp}.json".replace(":", "-")
+    )
+    result = comparison.compare_snapshots(report_config)
+    log.info(f"Saving snapshot comparison result to {output_file}. Use the `report` command to view.")
+    json.dump(result, open(output_file, "w", encoding=ENCODING))
 
-        left_data = json.load(open(left))
-        right_data = json.load(open(right))
-        comparison = SnapshotCompare(left_data, right_data)
 
-        (_, left_device, left_timestamp) = details_from_filename(str(left))
-        (_, right_device, right_timestamp) = details_from_filename(str(right))
-        if left_device != right_device:
-            log.error(f"{left_device} is not the same as {right_device} - are you comparing the right reports?")
+@app.command()
+def show_configuration(
+        config_path: CONFIG_OPTION = None,
+):
+    """Displays all the configured tests as they will be run. This is useful to show the defaults for this tool
+    or validate your own provided configuration file."""
+    config = load_config(config_path)
+    checker = CheckFirewall(None)
+    parsed_readiness_config = ConfigParser(
+            valid_elements=set(checker._check_method_mapping.keys()),
+            requested_config=config.pre_checks,
+            explicit_elements=CheckFirewall.EXPLICIT_CHECKS,
+        ).prepare_config()
 
-        output_file = result_store_path.joinpath(
-            f"snapshotr_{right_device}_{right_timestamp}.json".replace(":", "-")
-        )
-        result = comparison.compare_snapshots(report_config)
-        log.info(f"Saving snapshot comparison result to {output_file}. Use the `report` command to view.")
-        json.dump(result, open(output_file, "w", encoding=ENCODING))
+    snaps_list = ConfigParser(
+        valid_elements=set(checker._snapshot_method_mapping.keys()),
+        requested_config=config.snapshot_config,
+    ).prepare_config()
+
+    comparison = SnapshotCompare(None, None)
+    parsed_comparison_config = ConfigParser(
+            valid_elements=set(comparison._functions_mapping.keys()),
+            requested_config=config.snapshot_comparison_config,
+        ).prepare_config()
+
+    parsed_config_object = TestConfigs(
+        pre_checks=parsed_readiness_config,
+        snapshot_config=snaps_list,
+        snapshot_comparison_config=parsed_comparison_config
+    )
+    print(json.dumps(parsed_config_object.model_dump(), indent=4))
