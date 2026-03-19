@@ -77,7 +77,8 @@ def report(
 
     if format == FormatEnum.cli_table:
         if device:
-            print(reports.device_report_as_rich_table(device))
+            print(reports.device_readiness_report_as_rich_table(device))
+            print(reports.device_snapshot_report_as_rich_table(device))
         else:
             print(reports.counts_as_rich_table())
             print(reports.pass_or_fail_as_rich_string())
