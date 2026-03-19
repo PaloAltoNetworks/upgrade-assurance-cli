@@ -41,7 +41,8 @@ USERNAME_OPTION = Annotated[str, Option(
 PASSWORD_OPTION = Annotated[str, Option(
     envvar="UA_PASSWORD",
     help="Password",
-    prompt="password"
+    prompt="password",
+    hide_input=True,
 )]
 CONFIG_OPTION = Annotated[pathlib.Path, Option(
     help="Path To Configuration file",
@@ -115,7 +116,7 @@ def readiness(
     This command will generate a consolidated report and print it to the console. For more complex reporting behavior,
     use the `report` command.
     """
-    check_config = load_config(config_path).get("pre_checks")
+    check_config = load_config(config_path).pre_checks
 
     device_list = get_devices_from_argument(device)
 
