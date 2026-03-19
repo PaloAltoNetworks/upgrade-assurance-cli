@@ -66,12 +66,14 @@ class FormatEnum(str, enum.Enum):
 def report(
         result_store_path: Annotated[pathlib.Path, Option(help="Location of the results")] = "store",
         format: Annotated[FormatEnum, Option(help="Format for the report")] = FormatEnum.cli_table,
-        device: Annotated[str, Option(help="Single device report")] = None
+        device: Annotated[str, Option(help="Device string for single device report")] = None
 ):
     """Read all the check results and generate a report.
 
-    If you store contains multiple reports, and you have passed a device string, this will return the most recent
-    check results.
+    This command enumerates all the reports in the store and returns a report of all the results, including a timestamp,
+    to the CLI.
+
+    Alternatively, you can pass a device string in the same format
     """
     reports = generate_reports_from_store(result_store_path)
 
@@ -111,6 +113,13 @@ def readiness(
     """
     check_config = load_config(config_path).get("pre_checks", {})
     if not check_config:
+        check_config = [
+            "!planes_clock_sync",
+            "!certificates_requirements",
+            "!arp_entry_exist",
+            "!session_exist",
+            "!ip_sec_tunnel_status"
+        ]
         log.warning("No explicit readiness checks were given, using library defaults")
 
     device_list = get_devices_from_argument(device)
@@ -156,6 +165,7 @@ def snapshot(
             'routes',
             'license',
             'arp_table',
+            'session_stats'
         ]
         log.warning("No explicit snapshot config was given, using library defaults")
 
@@ -177,6 +187,7 @@ def snapshot(
     ]
     pooled_run_snapshot_checks_on_devices(exec_args, parallel=parallel)
     log.info("snapshot process has finished.")
+
 
 @app.command()
 def snapshot_comparison(
@@ -203,6 +214,13 @@ def snapshot_comparison(
                     'properties': ['!flags'],
                     'count_change_threshold': 10
                 }
+            },
+            {
+                'session_stats': {}
+
+            },
+            {
+                'license': {}
             }
         ]
         log.warn("No config for comparison was provided - using defaults")
