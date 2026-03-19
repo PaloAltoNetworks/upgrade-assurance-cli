@@ -47,11 +47,16 @@ class SnapshotReport:
         ]
         for check_name, check_value in self.report.items():
             row = [check_name]
-            for i in table[0][1:]:
-                result = check_value.get(i)
-                if isinstance(result, dict):
-                    result = result.get("passed")
-                row.append(result)
+            if check_value:
+                for i in table[0][1:]:
+                    result = check_value.get(i)
+                    if isinstance(result, dict):
+                        result = result.get("passed")
+                    row.append(result)
+            else:
+                # In the case where there is some problem wih the snapshot report, assume all tests have failed
+                for _ in table[0][1:]:
+                    row.append(False)
             table.append(row)
 
         return table
