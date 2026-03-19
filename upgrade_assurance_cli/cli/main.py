@@ -1,16 +1,18 @@
 import enum
 import datetime
+import json
 import pathlib
 import os
 from typing import Annotated
 
+from panos_upgrade_assurance.snapshot_compare import SnapshotCompare
 from typer import Typer, Argument, Option
 from rich import print, table
 
-from upgrade_assurance_cli.cli.report import generate_reports_from_store
+from upgrade_assurance_cli.cli.report import generate_reports_from_store, details_from_filename
 from upgrade_assurance_cli.cli.runner import pooled_run_readiness_checks_on_devices, \
     CheckExecutionArgs, pooled_run_snapshot_checks_on_devices
-from upgrade_assurance_cli.cli.utils import log, load_config, parse_file_to_devices
+from upgrade_assurance_cli.cli.utils import log, load_config, parse_file_to_devices, ENCODING
 
 SHORT_HELP_TEXT = """PAN-OS Upgrade Assurance CLI"""
 
@@ -46,16 +48,19 @@ class LogLevelEnum(enum.Enum):
     DEBUG = "DEBUG"
     INFO = "INFO"
 
+
 @app.callback()
 def setup(
-    log_level: Annotated[LogLevelEnum, Option()] = LogLevelEnum.INFO
+        log_level: Annotated[LogLevelEnum, Option()] = LogLevelEnum.INFO
 ):
     log.setLevel(level=log_level.value)
     log.debug("Debug logging enabled")
     log.info("Informational logging enabled")
 
+
 class FormatEnum(str, enum.Enum):
     cli_table = "cli_table"
+
 
 @app.command()
 def report(
@@ -77,13 +82,17 @@ def report(
             print(reports.counts_as_rich_table())
             print(reports.pass_or_fail_as_rich_string())
 
+
 def get_devices_from_argument(device: list[str]):
     device_list = []
     for d in device:
         if pathlib.Path(d).is_file():
             device_list += parse_file_to_devices(pathlib.Path(d))
+        else:
+            device_list.append(d)
 
     return device_list
+
 
 @app.command()
 def readiness(
@@ -122,6 +131,7 @@ def readiness(
     pooled_run_readiness_checks_on_devices(exec_args, parallel=parallel)
     reports = generate_reports_from_store(result_store_path)
     print(reports.counts_as_rich_table())
+
 
 @app.command()
 def snapshot(
@@ -166,3 +176,48 @@ def snapshot(
     ]
     pooled_run_snapshot_checks_on_devices(exec_args, parallel=parallel)
     log.info("snapshot process has finished.")
+
+@app.command()
+def snapshot_comparison(
+        left: Annotated[pathlib.Path, Argument(help="First snapshot")],
+        right: Annotated[pathlib.Path, Argument(help="Second snapshot")],
+        config_path: CONFIG_OPTION = None,
+        result_store_path: Annotated[pathlib.Path, Option(help="Path to store the results")] = "store",
+):
+    """Compares the result of two given snapshots and creates a report that can then be read using the 'reports'
+    command."""
+    report_config = load_config(config_path).get("snapshot_config", {})
+    os.makedirs(result_store_path, exist_ok=True)
+
+    if not report_config:
+        report_config = [
+            {
+                'arp_table': {
+                    'properties': ['!ttl'],
+                    'count_change_threshold': 10
+                }
+            },
+            {
+                'routes': {
+                    'properties': ['!flags'],
+                    'count_change_threshold': 10
+                }
+            }
+        ]
+        log.warn("No config for comparison was provided - using defaults")
+
+        left_data = json.load(open(left))
+        right_data = json.load(open(right))
+        comparison = SnapshotCompare(left_data, right_data)
+
+        (_, left_device, left_timestamp) = details_from_filename(str(left))
+        (_, right_device, right_timestamp) = details_from_filename(str(right))
+        if left_device != right_device:
+            log.error(f"{left_device} is not the same as {right_device} - are you comparing the right reports?")
+
+        output_file = result_store_path.joinpath(
+            f"snapshotr_{right_device}_{right_timestamp}.json".replace(":", "-")
+        )
+        result = comparison.compare_snapshots(report_config)
+        log.info(f"Saving result to {output_file}")
+        json.dump(result, open(output_file, "w", encoding=ENCODING))
