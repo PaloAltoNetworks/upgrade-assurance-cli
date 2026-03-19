@@ -1,6 +1,8 @@
 import multiprocessing
 import json
 
+from panos.firewall import Firewall
+from panos.panorama import Panorama
 from panos_upgrade_assurance.snapshot_compare import SnapshotCompare
 
 from upgrade_assurance_cli.cli.utils import log, ENCODING
@@ -13,12 +15,21 @@ def get_firewall_proxy_from_args(username: str, password: str, device: str):
     """Returns a FirewallProxy object based on the arguments passed to this function"""
     d = device.split(":")
     if len(d) == 2:
-        panorama, firewall_serial = d
-        return FirewallProxy(
-            hostname=panorama,
+
+        panorama_hostname, firewall_serial = d
+        fw = Firewall(
             api_username=username,
             api_password=password,
             serial=firewall_serial,
+        )
+        panorama = Panorama(
+            api_username=username,
+            api_password=password,
+            hostname=panorama_hostname,
+        )
+        panorama.add(fw)
+        return FirewallProxy(
+            fw
         )
 
     return FirewallProxy(
@@ -53,7 +64,6 @@ def setup_for_checks(exec_arguments: CheckExecutionArgs):
         exec_arguments.password,
         exec_arguments.hostname,
     )
-
     fileLog = logging.getLogger(exec_arguments.device_str)
     file_handler = logging.FileHandler(
         f"{exec_arguments.device_str}.log"

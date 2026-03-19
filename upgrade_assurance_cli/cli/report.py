@@ -7,6 +7,8 @@ import sys
 from rich.table import Table
 from panos_upgrade_assurance.snapshot_compare import SnapshotCompare
 
+from upgrade_assurance_cli.cli.utils import log
+
 
 class ReportTypeEnum(str, enum.Enum):
     readiness = "readiness"
@@ -185,15 +187,19 @@ class CheckReports:
         return table
 
     def get_latest_report_by_device(self, device_str: str, reports: list):
-        sorted_devices = sorted([d for d in reports if d.device == device_str], key=lambda d: d.timestamp,
+        sorted_reports = sorted([d for d in reports if d.device == device_str], key=lambda d: d.timestamp,
                                 reverse=True)
-        if not sorted_devices:
-            raise BadDeviceStringException(f"device {device_str} not found or no report was present.")
+        if not sorted_reports:
+            log.warning("No report found for device {}".format(device_str))
+            return None
 
-        return sorted_devices[0]
+        return sorted_reports[0]
 
     def device_readiness_report_as_rich_table(self, device_str: str):
         report = self.get_latest_report_by_device(device_str, self.readiness_reports)
+        if not report:
+            return f"[yellow]No Readiness report found for {device_str}[/yellow]"
+
         list_table = report.checks_as_table()
         table = Table(caption=f"READINESS Checks were ran at {report.datetime.isoformat()}")
         for c in list_table[0]:
@@ -210,6 +216,8 @@ class CheckReports:
 
     def device_snapshot_report_as_rich_table(self, device_str: str):
         report = self.get_latest_report_by_device(device_str, self.snapshot_reports)
+        if not report:
+            return f"[yellow]No Snapshot report found for {device_str}[/yellow]"
         table = Table(caption=f"SNAPSHOT Report was ran at {report.datetime.isoformat()}")
         table_list = report.checks_as_table()
         for header in table_list[0]:
