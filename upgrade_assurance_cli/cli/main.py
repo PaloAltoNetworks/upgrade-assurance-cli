@@ -11,7 +11,7 @@ from panos_upgrade_assurance.utils import ConfigParser
 from typer import Typer, Argument, Option
 from rich import print, table
 
-from upgrade_assurance_cli.cli.report import generate_reports_from_store, details_from_filename
+from upgrade_assurance_cli.cli.report import generate_reports_from_store, details_from_filename, read_snapshot_report
 from upgrade_assurance_cli.cli.runner import pooled_run_readiness_checks_on_devices, \
     CheckExecutionArgs, pooled_run_snapshot_checks_on_devices
 from upgrade_assurance_cli.cli.utils import log, load_config, parse_file_to_devices, ENCODING, TestConfigs
@@ -183,8 +183,8 @@ def compare_snapshots(
         config_path: CONFIG_OPTION = None,
         result_store_path: Annotated[pathlib.Path, Option(help="Path to store the results")] = "store",
 ):
-    """Compares the result of two given snapshots and creates a report that can then be read using the 'reports'
-    command."""
+    """Compares the result of two given snapshots and creates a report. The report is saved, but it is also displayed
+    automatically for convenience"""
     report_config = load_config(config_path).snapshot_comparison_config
 
     os.makedirs(result_store_path, exist_ok=True)
@@ -204,6 +204,8 @@ def compare_snapshots(
     log.info(f"Saving snapshot comparison result to {output_file}. Use the `report` command to view.")
     json.dump(result, open(output_file, "w", encoding=ENCODING))
 
+    reports = read_snapshot_report(output_file)
+    print(reports.device_snapshot_report_as_rich_table(left_device))
 
 @app.command()
 def show_configuration(

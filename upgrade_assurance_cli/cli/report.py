@@ -242,11 +242,25 @@ class CheckReports:
 
         return table
 
+
 def details_from_filename(filename: str) -> tuple[str, str, str]:
     """Gets the device name, the check type and the timestamp based on the filename."""
     filename = filename.replace(".json", "")
     check_type, device, timestamp = filename.split("_")
     return check_type, device, timestamp
+
+
+def read_snapshot_report(path: pathlib.Path):
+    """Reads a single report and returns it """
+    check_type, device, timestamp = details_from_filename(path.name)
+    reports = CheckReports()
+    report = SnapshotReport(
+        timestamp=timestamp,
+        device=device,
+        report=json.load(open(path)),
+    )
+    reports.add_snapshot_report(report)
+    return reports
 
 
 def generate_reports_from_store(store_path: pathlib.Path):
