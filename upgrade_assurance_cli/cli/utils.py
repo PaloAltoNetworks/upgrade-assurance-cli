@@ -20,7 +20,9 @@ DEFAULT_SNAPSHOT_CONFIG = [
     'routes',
     'license',
     'arp_table',
-    'session_stats'
+    'session_stats',
+    'ip_sec_tunnels',
+    'bgp_peers'
 ]
 
 DEFAULT_SNAPSHOT_COMPARISON_CONFIG = [
@@ -58,7 +60,8 @@ DEFAULT_READINESS_CHECKS = [
     "jobs",
     "global_jumbo_frame",
     "dp_cpu_utilization",
-    "mp_cpu_utilization"
+    "mp_cpu_utilization",
+    # "planes_clock_sync" # Currently bugged on some platforms
 ]
 
 
