@@ -136,6 +136,11 @@ def readiness(
     ]
     pooled_run_readiness_checks_on_devices(exec_args, parallel=parallel)
     reports = generate_reports_from_store(result_store_path)
+    if len(device_list) == 1:
+        log.info("Only one device was provided - displaying latest results only")
+        print(reports.device_readiness_report_as_rich_table(device_list[0]))
+        return
+
     print(reports.counts_as_rich_table())
 
 
