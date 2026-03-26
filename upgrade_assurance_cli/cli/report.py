@@ -29,11 +29,11 @@ class SnapshotReport:
 
     @property
     def count_failed_checks(self) -> int:
-        return len([k for k, v in self.report.items() if not v.get("passed")])
+        return len([k for k, v in self.report.items() if v and not v.get("passed")])
 
     @property
     def count_passed_checks(self) -> int:
-        return len([k for k, v in self.report.items() if v.get("passed")])
+        return len([k for k, v in self.report.items() if v and v.get("passed")])
 
     def checks_as_table(self):
         table = [
@@ -199,7 +199,6 @@ class CheckReports:
         sorted_reports = sorted([d for d in reports if d.device == device_str], key=lambda d: d.timestamp,
                                 reverse=True)
         if not sorted_reports:
-            log.warning("No report found for device {}".format(device_str))
             return None
 
         return sorted_reports[0]
