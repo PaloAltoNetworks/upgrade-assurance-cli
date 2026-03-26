@@ -92,17 +92,26 @@ def run_readiness_checks_on_device(exec_arguments: CheckExecutionArgs):
             json.dump(result, fh, indent=4)
 
         fileLog.info(f"{exec_arguments.device_str} - Writing to file {output_file}")
-    except Exception:
+    except Exception as e:
         fileLog.critical(f"Readiness checks failed!", exc_info=True)
+        result = {
+            "device_connectivity": {
+                "state": False,
+                "status": "ERROR",
+                "reason": f"Critical error running readiness checks: {e}"
+            }
+        }
+        with open(output_file, "w", encoding=ENCODING) as fh:
+            json.dump(result, fh, indent=4)
 
 
 def get_snapshots_on_device(exec_arguments: CheckExecutionArgs):
     checks, fileLog = setup_for_checks(exec_arguments)
     fileLog.info(f"{exec_arguments.device_str} - Taking device snapshot")
+    output_file = exec_arguments.output_file
 
     try:
         snapshot_configuration = exec_arguments.check_configuration
-        output_file = exec_arguments.output_file
 
         result = checks.run_snapshots(
             snapshot_configuration
@@ -112,8 +121,8 @@ def get_snapshots_on_device(exec_arguments: CheckExecutionArgs):
             json.dump(result, fh, indent=4)
 
         fileLog.info(f"{exec_arguments.device_str} - Writing to file {output_file}")
-    except Exception:
-        fileLog.critical(f"Readiness checks failed!", exc_info=True)
+    except Exception as e:
+        fileLog.critical(f"Snapshot failed!", exc_info=True)
 
 
 def pooled_run_readiness_checks_on_devices(
