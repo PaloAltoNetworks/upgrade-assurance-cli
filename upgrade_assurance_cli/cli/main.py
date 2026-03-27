@@ -6,11 +6,13 @@ import os
 from typing import Annotated
 
 from panos_upgrade_assurance.check_firewall import CheckFirewall
+from panos_upgrade_assurance.exceptions import SnapshotNoneComparisonException
 from panos_upgrade_assurance.snapshot_compare import SnapshotCompare
 from panos_upgrade_assurance.utils import ConfigParser
 from typer import Typer, Argument, Option
 from rich import print, table
 
+from upgrade_assurance_cli.cli.exporter import ExporterArguments, pooled_take_config_backup, BackupTypeEnum
 from upgrade_assurance_cli.cli.report import generate_reports_from_store, details_from_filename, read_snapshot_report, \
     get_snapshot_data_report
 from upgrade_assurance_cli.cli.runner import pooled_run_readiness_checks_on_devices, \
@@ -191,8 +193,7 @@ def compare_snapshots(
         config_path: CONFIG_OPTION = None,
         result_store_path: Annotated[pathlib.Path, Option(help="Path to store the results")] = "store",
 ):
-    """Compares the result of two given snapshots and creates a report. The report is saved, but it is also displayed
-    automatically for convenience"""
+    """Compares the result of two given snapshots and creates a report. The report is saved, but it is also displayed automatically for convenience"""
     report_config = load_config(config_path).snapshot_comparison_config
 
     os.makedirs(result_store_path, exist_ok=True)
@@ -208,19 +209,24 @@ def compare_snapshots(
     output_file = result_store_path.joinpath(
         f"snapshotr_{right_device}_{right_timestamp}.json".replace(":", "-")
     )
-    result = comparison.compare_snapshots(report_config)
-    log.info(f"Saving snapshot comparison result to {output_file}.")
-    json.dump(result, open(output_file, "w", encoding=ENCODING))
+    try:
+        result = comparison.compare_snapshots(report_config)
+        log.info(f"Saving snapshot comparison result to {output_file}.")
+        json.dump(result, open(output_file, "w", encoding=ENCODING))
 
-    reports = read_snapshot_report(output_file)
-    print(reports.device_snapshot_report_as_rich_table(left_device))
+        reports = read_snapshot_report(output_file)
+        print(reports.device_snapshot_report_as_rich_table(left_device))
+    except SnapshotNoneComparisonException as e:
+        log.critical(e)
+        print("[bold red]Snapshot comparison is not possible as one, or both, of the snapshots contain null data values."
+              " The most likely cause is a device connectivity failure when taking the snapshot data from the device."
+              "[/bold red]")
 
 @app.command()
 def show_configuration(
         config_path: CONFIG_OPTION = None,
 ):
-    """Displays all the configured tests as they will be run. This is useful to show the defaults for this tool
-    or validate your own provided configuration file."""
+    """Displays all the configured tests as they will be run. This is useful to show the defaults for this tool or validate your own provided configuration file."""
     config = load_config(config_path)
     checker = CheckFirewall(None)
     parsed_readiness_config = ConfigParser(
@@ -246,3 +252,32 @@ def show_configuration(
         snapshot_comparison_config=parsed_comparison_config
     )
     print(json.dumps(parsed_config_object.model_dump(), indent=4))
+
+@app.command()
+def backup(
+        username: USERNAME_OPTION,
+        password: PASSWORD_OPTION,
+        device: DEVICE_ARGUMENT,
+        export_type: Annotated[BackupTypeEnum, Option(help="Type of backup to take")] = BackupTypeEnum.configuration,
+        backup_path: Annotated[pathlib.Path, Option(help="Path to store backups in")] = "backups",
+        parallel: Annotated[int, Option(help="Number of concurrent connections to make")] = 2
+):
+    """Backup the configuration of one or more devices to the provided backup_path."""
+    os.makedirs(backup_path, exist_ok=True)
+
+    device_list = get_devices_from_argument(device)
+    timestamp = int(datetime.datetime.now(tz=datetime.UTC).timestamp())
+
+    exec_args = [
+        ExporterArguments(
+            username=username,
+            password=password,
+            hostname=d,
+            output_file=backup_path.joinpath(
+                f"backup_{d}_{timestamp}".replace(":", "-")
+            ),
+            export_type=export_type
+        ) for d in device_list
+    ]
+    log.info(f"Taking {export_type} backups of {len(exec_args)} devices")
+    pooled_take_config_backup(exec_args, parallel=parallel)
