@@ -11,7 +11,8 @@ from panos_upgrade_assurance.utils import ConfigParser
 from typer import Typer, Argument, Option
 from rich import print, table
 
-from upgrade_assurance_cli.cli.report import generate_reports_from_store, details_from_filename, read_snapshot_report
+from upgrade_assurance_cli.cli.report import generate_reports_from_store, details_from_filename, read_snapshot_report, \
+    get_snapshot_data_report
 from upgrade_assurance_cli.cli.runner import pooled_run_readiness_checks_on_devices, \
     CheckExecutionArgs, pooled_run_snapshot_checks_on_devices
 from upgrade_assurance_cli.cli.utils import log, load_config, parse_file_to_devices, ENCODING, TestConfigs
@@ -178,7 +179,9 @@ def snapshot(
         ) for d in device_list
     ]
     pooled_run_snapshot_checks_on_devices(exec_args, parallel=parallel)
-    log.info(f"snapshot process has finished. Snapshots saved to {snapshot_store_path}")
+    log.info(f"snapshot process has finished. {len(exec_args)} snapshots saved to {snapshot_store_path}.")
+    if len(exec_args) == 1:
+        print(get_snapshot_data_report(exec_args[0].output_file).data_as_rich_table())
 
 
 @app.command()
@@ -206,7 +209,7 @@ def compare_snapshots(
         f"snapshotr_{right_device}_{right_timestamp}.json".replace(":", "-")
     )
     result = comparison.compare_snapshots(report_config)
-    log.info(f"Saving snapshot comparison result to {output_file}. Use the `report` command to view.")
+    log.info(f"Saving snapshot comparison result to {output_file}.")
     json.dump(result, open(output_file, "w", encoding=ENCODING))
 
     reports = read_snapshot_report(output_file)
