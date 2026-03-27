@@ -64,3 +64,6 @@ openssl.cnf
 coverage.xml
 store
 *.log
+snapshots
+store
+backups

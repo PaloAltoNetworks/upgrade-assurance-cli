@@ -11,7 +11,7 @@ from panos_upgrade_assurance.check_firewall import CheckFirewall
 import logging
 
 
-def get_firewall_proxy_from_args(username: str, password: str, device: str):
+def get_firewall_proxy_from_args(username: str, password: str, device: str) -> FirewallProxy:
     """Returns a FirewallProxy object based on the arguments passed to this function"""
     d = device.split(":")
     if len(d) == 2:
@@ -58,42 +58,44 @@ class CheckExecutionArgs:
     def device_str(self):
         return f"{self.hostname}".replace(":", "-")
 
-def setup_for_checks(exec_arguments: CheckExecutionArgs):
-    device = get_firewall_proxy_from_args(
-        exec_arguments.username,
-        exec_arguments.password,
-        exec_arguments.hostname,
-    )
-    fileLog = logging.getLogger(exec_arguments.device_str)
+def setup_logger_for_runners(device_str):
+    file_log = logging.getLogger(device_str)
     file_handler = logging.FileHandler(
-        f"{exec_arguments.device_str}.log"
+        f"{device_str}.log"
     )
     file_handler.setFormatter(
         logging.Formatter(
             fmt="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
         )
     )
-    fileLog.addHandler(file_handler)
-    fileLog.propagate = False
+    file_log.addHandler(file_handler)
+    file_log.propagate = False
+    return file_log
 
-    fileLog.info(f"{exec_arguments.device_str} - Running readiness checks on device ")
-    return CheckFirewall(device), fileLog
+def setup_for_checks(exec_arguments: CheckExecutionArgs):
+    device = get_firewall_proxy_from_args(
+        exec_arguments.username,
+        exec_arguments.password,
+        exec_arguments.hostname,
+    )
+    file_log = setup_logger_for_runners(exec_arguments.device_str)
+    return CheckFirewall(device), file_log
 
 def run_readiness_checks_on_device(exec_arguments: CheckExecutionArgs):
     check_configuration = exec_arguments.check_configuration
     output_file = exec_arguments.output_file
     try:
 
-        checks, fileLog = setup_for_checks(exec_arguments)
+        checks, file_log = setup_for_checks(exec_arguments)
         result = checks.run_readiness_checks(
             check_configuration
         )
         with open(output_file, "w", encoding=ENCODING) as fh:
             json.dump(result, fh, indent=4)
 
-        fileLog.info(f"{exec_arguments.device_str} - Writing to file {output_file}")
+        file_log.info(f"{exec_arguments.device_str} - Writing to file {output_file}")
     except Exception as e:
-        fileLog.critical(f"Readiness checks failed!", exc_info=True)
+        file_log.critical(f"Readiness checks failed!", exc_info=True)
         result = {
             "device_connectivity": {
                 "state": False,
@@ -106,8 +108,8 @@ def run_readiness_checks_on_device(exec_arguments: CheckExecutionArgs):
 
 
 def get_snapshots_on_device(exec_arguments: CheckExecutionArgs):
-    checks, fileLog = setup_for_checks(exec_arguments)
-    fileLog.info(f"{exec_arguments.device_str} - Taking device snapshot")
+    checks, file_log = setup_for_checks(exec_arguments)
+    file_log.info(f"{exec_arguments.device_str} - Taking device snapshot")
     output_file = exec_arguments.output_file
 
     try:
@@ -120,9 +122,9 @@ def get_snapshots_on_device(exec_arguments: CheckExecutionArgs):
         with open(output_file, "w", encoding=ENCODING) as fh:
             json.dump(result, fh, indent=4)
 
-        fileLog.info(f"{exec_arguments.device_str} - Writing to file {output_file}")
+        file_log.info(f"{exec_arguments.device_str} - Writing to file {output_file}")
     except Exception as e:
-        fileLog.critical(f"Snapshot failed!", exc_info=True)
+        file_log.critical(f"Snapshot failed!", exc_info=True)
 
 
 def pooled_run_readiness_checks_on_devices(

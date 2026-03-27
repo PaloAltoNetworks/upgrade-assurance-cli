@@ -43,6 +43,18 @@ Compare two snapshots
 assurance-cli compare-snapshots <first-snapshot-path> <second-snapshot-path>
 ```
 
+Backup the configuration running-configuration
+
+```shell
+assurance-cli backup myfirewall.com
+```
+
+Backup the configuration device-state
+
+```shell
+assurance-cli backup myfirewall.com --export-type device-state
+```
+
 ## Configuration
 
 ### Running Against Multiple Devices
