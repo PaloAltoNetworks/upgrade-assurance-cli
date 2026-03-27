@@ -5,9 +5,6 @@ import datetime
 import sys
 
 from rich.table import Table
-from panos_upgrade_assurance.snapshot_compare import SnapshotCompare
-
-from upgrade_assurance_cli.cli.utils import log
 
 
 class ReportTypeEnum(str, enum.Enum):
@@ -287,3 +284,54 @@ def generate_reports_from_store(store_path: pathlib.Path):
                 reports.add_snapshot_report(report)
 
     return reports
+
+
+class SnapshotData:
+    def __init__(
+            self,
+            device: str,
+            data: dict[str, dict],
+            timestamp: int | str,
+    ):
+        self.timestamp = int(timestamp)
+        self.datetime = datetime.datetime.fromtimestamp(self.timestamp)
+        self.device = device
+        self.data = data
+
+    def data_as_table(self):
+        table = [
+            [
+                "type",
+                "state"
+            ]
+        ]
+
+        for snapshot_type, data in self.data.items():
+            table.append([snapshot_type, data.get('state')])
+
+        return table
+
+    def data_as_rich_table(self):
+        table = Table(caption=f"SNAPSHOT Taken at {self.datetime.isoformat()}")
+        table_list = self.data_as_table()
+        for c in table_list[0]:
+            table.add_column(c)
+
+        for r in table_list[1:]:
+            style = "green"
+            if not r[1]:
+                style = "bold red"
+            new_row_items = [str(i) for i in r]
+            table.add_row(*new_row_items, style=style)
+
+        return table
+
+
+def get_snapshot_data_report(path: pathlib.Path):
+    """Returns a `SnapshotData` instance representing a taken snapshot"""
+    if path.is_file() and path.suffix == '.json':
+        check_type, device, timestamp = details_from_filename(path.name)
+        report = SnapshotData(device, json.load(open(path)), timestamp)
+        return report
+
+    raise FileNotFoundError(f"{path} not found.")
