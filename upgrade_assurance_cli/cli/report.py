@@ -34,13 +34,7 @@ class SnapshotReport:
 
     def checks_as_table(self):
         table = [
-            [
-                "check_name",
-                "passed",
-                "missing",
-                "added",
-                "count_change_percentage"
-            ]
+            ["check_name", "passed", "missing", "added", "count_change_percentage"]
         ]
         for check_name, check_value in self.report.items():
             row = [check_name]
@@ -61,10 +55,10 @@ class SnapshotReport:
 
 class ReadinessCheckReport:
     def __init__(
-            self,
-            device: str,
-            report: dict[str, dict],
-            timestamp: int | str,
+        self,
+        device: str,
+        report: dict[str, dict],
+        timestamp: int | str,
     ):
         self.timestamp = int(timestamp)
         self.datetime = datetime.datetime.fromtimestamp(self.timestamp)
@@ -91,25 +85,13 @@ class ReadinessCheckReport:
         return ", ".join(failed_list)
 
     def checks_as_table(self):
-        table = [
-            [
-                "check_name",
-                "passed",
-                "check_status",
-                "reason"
-            ]
-        ]
+        table = [["check_name", "passed", "check_status", "reason"]]
         for k, check in self.report.items():
             state = check["state"]
             status = check["status"]
             reason = check["reason"]
 
-            table.append([
-                k,
-                state,
-                status,
-                reason
-            ])
+            table.append([k, state, status, reason])
         return table
 
 
@@ -127,12 +109,18 @@ class CheckReports:
     @property
     def failed_reports(self):
         return [
-            r for r in self.readiness_reports + self.snapshot_reports if r.count_failed_checks > 0
+            r
+            for r in self.readiness_reports + self.snapshot_reports
+            if r.count_failed_checks > 0
         ]
 
     @property
     def passed_reports(self):
-        return [r for r in self.readiness_reports + self.snapshot_reports if r.count_failed_checks == 0]
+        return [
+            r
+            for r in self.readiness_reports + self.snapshot_reports
+            if r.count_failed_checks == 0
+        ]
 
     def exit_by_status(self):
         if self.failed_reports:
@@ -173,7 +161,7 @@ class CheckReports:
                 "report_type",
                 "device",
                 "failed_checks_count",
-                "passed_checks_count"
+                "passed_checks_count",
             ]
         ]
         for report in self.sorted_reports:
@@ -183,7 +171,7 @@ class CheckReports:
                     report.report_type.value,
                     report.device,
                     report.count_failed_checks,
-                    report.count_passed_checks
+                    report.count_passed_checks,
                 ]
             )
         return table
@@ -193,8 +181,11 @@ class CheckReports:
         return sorted(self.reports, key=lambda d: d.timestamp)
 
     def get_latest_report_by_device(self, device_str: str, reports: list):
-        sorted_reports = sorted([d for d in reports if d.device == device_str], key=lambda d: d.timestamp,
-                                reverse=True)
+        sorted_reports = sorted(
+            [d for d in reports if d.device == device_str],
+            key=lambda d: d.timestamp,
+            reverse=True,
+        )
         if not sorted_reports:
             return None
 
@@ -206,7 +197,9 @@ class CheckReports:
             return f"[yellow]No Readiness report found for {device_str}[/yellow]"
 
         list_table = report.checks_as_table()
-        table = Table(caption=f"READINESS Checks were ran at {report.datetime.isoformat()}")
+        table = Table(
+            caption=f"READINESS Checks were ran at {report.datetime.isoformat()}"
+        )
         for c in list_table[0]:
             table.add_column(c)
 
@@ -223,7 +216,9 @@ class CheckReports:
         report = self.get_latest_report_by_device(device_str, self.snapshot_reports)
         if not report:
             return f"[yellow]No Snapshot report found for {device_str}[/yellow]"
-        table = Table(caption=f"SNAPSHOT Report was ran at {report.datetime.isoformat()}")
+        table = Table(
+            caption=f"SNAPSHOT Report was ran at {report.datetime.isoformat()}"
+        )
         table_list = report.checks_as_table()
         for header in table_list[0]:
             table.add_column(f"{header}")
@@ -247,7 +242,7 @@ def details_from_filename(filename: str) -> tuple[str, str, str]:
 
 
 def read_snapshot_report(path: pathlib.Path):
-    """Reads a single report and returns it """
+    """Reads a single report and returns it"""
     check_type, device, timestamp = details_from_filename(path.name)
     reports = CheckReports()
     report = SnapshotReport(
@@ -266,7 +261,7 @@ def generate_reports_from_store(store_path: pathlib.Path):
     reports = CheckReports()
     file: pathlib.Path
     for file in store_path.iterdir():
-        if file.is_file() and file.suffix == '.json':
+        if file.is_file() and file.suffix == ".json":
             check_type, device, timestamp = details_from_filename(file.name)
             if check_type == ReportTypeEnum.readiness.value:
                 report = ReadinessCheckReport(
@@ -288,10 +283,10 @@ def generate_reports_from_store(store_path: pathlib.Path):
 
 class SnapshotData:
     def __init__(
-            self,
-            device: str,
-            data: dict[str, dict],
-            timestamp: int | str,
+        self,
+        device: str,
+        data: dict[str, dict],
+        timestamp: int | str,
     ):
         self.timestamp = int(timestamp)
         self.datetime = datetime.datetime.fromtimestamp(self.timestamp)
@@ -299,15 +294,10 @@ class SnapshotData:
         self.data = data
 
     def data_as_table(self):
-        table = [
-            [
-                "type",
-                "state"
-            ]
-        ]
+        table = [["type", "state"]]
 
         for snapshot_type, data in self.data.items():
-            table.append([snapshot_type, data.get('state')])
+            table.append([snapshot_type, data.get("state")])
 
         return table
 
@@ -329,7 +319,7 @@ class SnapshotData:
 
 def get_snapshot_data_report(path: pathlib.Path):
     """Returns a `SnapshotData` instance representing a taken snapshot"""
-    if path.is_file() and path.suffix == '.json':
+    if path.is_file() and path.suffix == ".json":
         check_type, device, timestamp = details_from_filename(path.name)
         report = SnapshotData(device, json.load(open(path)), timestamp)
         return report

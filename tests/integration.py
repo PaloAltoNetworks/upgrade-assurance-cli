@@ -3,6 +3,7 @@ import os
 
 from panos_upgrade_assurance.firewall_proxy import FirewallProxy
 
+
 @pytest.fixture(scope="session")
 def firewall_fixture():
     if not os.getenv("UA_USERNAME"):
@@ -14,7 +15,9 @@ def firewall_fixture():
         hostname=os.getenv("UA_HOSTNAME"),
     )
 
+
 def test_get_device_state(firewall_fixture):
     from upgrade_assurance_cli.cli.exporter import get_device_state
+
     result = get_device_state(firewall_fixture._fw)
     print(len(result.content))
