@@ -16,35 +16,20 @@ log = logging.getLogger("cli")
 ENCODING = "utf-8"
 
 DEFAULT_SNAPSHOT_CONFIG = [
-    'nics',
-    'routes',
-    'license',
-    'arp_table',
-    'session_stats',
-    'ip_sec_tunnels',
-    'bgp_peers'
+    "nics",
+    "routes",
+    "license",
+    "arp_table",
+    "session_stats",
+    "ip_sec_tunnels",
+    "bgp_peers",
 ]
 
 DEFAULT_SNAPSHOT_COMPARISON_CONFIG = [
-    {
-        'arp_table': {
-            'properties': ['!ttl'],
-            'count_change_threshold': 10
-        }
-    },
-    {
-        'routes': {
-            'properties': ['!flags'],
-            'count_change_threshold': 10
-        }
-    },
-    {
-        'session_stats': {}
-
-    },
-    {
-        'license': {}
-    }
+    {"arp_table": {"properties": ["!ttl"], "count_change_threshold": 10}},
+    {"routes": {"properties": ["!flags"], "count_change_threshold": 10}},
+    {"session_stats": {}},
+    {"license": {}},
 ]
 
 DEFAULT_READINESS_CHECKS = [
@@ -79,7 +64,7 @@ def load_config(fp: pathlib.Path):
         loaded_config = {
             "snapshot_config": DEFAULT_SNAPSHOT_CONFIG,
             "snapshot_comparison_config": DEFAULT_SNAPSHOT_COMPARISON_CONFIG,
-            "pre_checks": DEFAULT_READINESS_CHECKS
+            "pre_checks": DEFAULT_READINESS_CHECKS,
         }
 
         return TestConfigs(**loaded_config)
