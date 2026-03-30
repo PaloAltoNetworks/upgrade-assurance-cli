@@ -11,6 +11,13 @@ It is recommended to install this project with [pipx](https://pipx.pypa.io/stabl
 Installing with pipx will automatically make the main script, `assurance-cli` available at the command line.
 
 ```shell
+pipx install upgrade-assurance-cli
+```
+
+You can also install directly from this repository if you want to get changes as we develop them, but before they are
+formally released.
+
+```shell
 # Install from the main branch
 pipx install git+https://github.com/PaloAltoNetworks/upgrade-assurance-cli.git 
 # Install from <branch_name>, useful for testing.
