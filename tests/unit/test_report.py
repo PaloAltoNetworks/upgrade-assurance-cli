@@ -1,4 +1,4 @@
-from tests.fixtures import report_store
+from tests.unit.fixtures import report_store
 
 
 def test_generate_report_from_store(report_store):

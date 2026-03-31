@@ -46,7 +46,7 @@ jobs:
 
       - name: Run unit tests and coverage
         run: |
-          poetry run pytest --cov upgrade_assurance_cli --cov-report=term-missing --cov-report=xml:".coverage.${{ matrix.python_version }}"
+          poetry run pytest tests/unit --cov upgrade_assurance_cli --cov-report=term-missing --cov-report=xml:".coverage.${{ matrix.python_version }}"
 
       - name: Store coverage file
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
