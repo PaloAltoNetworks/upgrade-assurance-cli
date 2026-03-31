@@ -21,3 +21,6 @@ def test_get_device_state(firewall_fixture):
 
     result = get_device_state(firewall_fixture._fw)
     print(len(result.content))
+
+def test_get_capacity_details():
+    pass
