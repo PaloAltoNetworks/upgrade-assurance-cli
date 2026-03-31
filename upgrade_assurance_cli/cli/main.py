@@ -26,7 +26,7 @@ from upgrade_assurance_cli.cli.report import (
 from upgrade_assurance_cli.cli.runner import (
     pooled_run_readiness_checks_on_devices,
     CheckExecutionArgs,
-    pooled_run_snapshot_checks_on_devices,
+    pooled_run_snapshot_checks_on_devices, pooled_run_capacity_checks_on_devices,
 )
 from upgrade_assurance_cli.cli.utils import (
     log,
@@ -114,6 +114,7 @@ def report(
         if device:
             print(reports.device_readiness_report_as_rich_table(device))
             print(reports.device_snapshot_report_as_rich_table(device))
+            print(reports.device_capacity_report_as_rich_table(device))
         else:
             print(reports.counts_as_rich_table())
             print(reports.pass_or_fail_as_rich_string())
@@ -337,8 +338,49 @@ def backup(
 
 @app.command()
 def version():
+    """Show the version of this script, then exit"""
     from upgrade_assurance_cli import __version__
 
     print(
         f"Upgrade Assurance CLI version [bold bright_magenta]{__version__}[/bold bright_magenta]"
     )
+
+
+@app.command()
+def capacity(
+    username: USERNAME_OPTION,
+    password: PASSWORD_OPTION,
+    device: DEVICE_ARGUMENT,
+    store_path: Annotated[
+        pathlib.Path, Option(help="Path to store the resultant capacity reports")
+    ] = "store",
+    parallel: Annotated[
+        int, Option(help="Number of concurrent connections to make")
+    ] = 2,
+):
+    """Retrieves capacity statistics about the running devices, such as session count, and produces a report. This is useful to determine overall system utilization with hardware limits.
+    """
+    os.makedirs(store_path, exist_ok=True)
+
+    device_list = get_devices_from_argument(device)
+    timestamp = int(datetime.datetime.now(tz=datetime.UTC).timestamp())
+
+    exec_args = [
+        CheckExecutionArgs(
+            username=username,
+            password=password,
+            hostname=d,
+            check_configuration=None,
+            output_file=store_path.joinpath(
+                f"capacity_{d}_{timestamp}.json".replace(":", "-")
+            ),
+        )
+        for d in device_list
+    ]
+    pooled_run_capacity_checks_on_devices(exec_args, parallel=parallel)
+    log.info(
+        f"Capacity check process has finished. {len(exec_args)} reports saved to {store_path}."
+    )
+    reports = generate_reports_from_store(store_path)
+    if len(device_list) == 1:
+        print(reports.device_capacity_report_as_rich_table(device_list[0]))

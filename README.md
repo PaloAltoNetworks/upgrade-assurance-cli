@@ -38,6 +38,12 @@ Read the last readiness report for a specific device
 assurance-cli report --device myfirewall.com
 ```
 
+Take a capacity report
+
+```shell
+assurance-cli capacity myfirewall.com
+```
+
 Take an operational snapshot
 
 ```shell
@@ -63,6 +69,24 @@ assurance-cli backup myfirewall.com --export-type device-state
 ```
 
 ## Configuration
+
+### Report storage
+
+By default, `assurance-cli` uses the following directory structure to store all
+reports and artifacts:
+
+```
+.
+├── ./
+│   ├── snapshots/
+│   │   ├── snapshot_<device-str>_<timestamp>.json
+│   ├── store/
+│   │   ├── capacity_<device-str>_<timestamp>.json
+│   │   ├── readiness_<device-str>_<timestamp>.json
+│   │   ├── snapshotr_<device-str>_<timestamp>.json
+│   ├── backups/
+│   │   ├── backup_<device-str>_<timestamp>.json
+```
 
 ### Running Against Multiple Devices
 

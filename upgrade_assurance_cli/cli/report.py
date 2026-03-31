@@ -4,12 +4,17 @@ import enum
 import datetime
 import sys
 
+from rich.bar import Bar
+from rich.progress import BarColumn
 from rich.table import Table
+
+from upgrade_assurance_cli.cli.capacity import CapacityComparisonResults
 
 
 class ReportTypeEnum(str, enum.Enum):
     readiness = "readiness"
     snapshot = "snapshotr"
+    capacity = "capacity"
 
 
 class BadDeviceStringException(Exception):
@@ -94,17 +99,85 @@ class ReadinessCheckReport:
             table.append([k, state, status, reason])
         return table
 
+class CapacityReport:
+    def __init__(
+        self,
+        device: str,
+        report: dict,
+        timestamp: int | str,
+        threshold: float | int = 80,
+    ):
+        self.timestamp = int(timestamp)
+        self.datetime = datetime.datetime.fromtimestamp(self.timestamp)
+        self.device = device
+        self.report = report
+        self.report_type = ReportTypeEnum.capacity
+        self.threshold = threshold
+
+    @property
+    def results(self):
+        return self.report.get("results")
+
+    @property
+    def count_failed_checks(self):
+        results = self.results
+        return len([i for i in results if i.get("percent") >= self.threshold ])
+
+    @property
+    def count_passed_checks(self):
+        results = self.results
+        return len([i for i in results if i.get("percent") < self.threshold ])
+
+    def data_as_rich_table(self):
+        table = Table(
+            title="Device Capacity",
+            show_header=True,
+            caption=f"Capacity measured at {self.datetime.isoformat()}"
+        )
+
+        table.add_column("test")
+        table.add_column("status")
+        table.add_column("current")
+        table.add_column("max")
+        table.add_column("utilization")
+
+        for r in self.results:
+            percent = r.get("percent")
+            status = "SUCCESS"
+            style = "yellow"
+
+            if percent == 0:
+                percent = 1 # Make it so it renders some bar anyway, just so it doesn't look broken
+                style = "cyan"
+
+            if percent >= self.threshold:
+                style = "red"
+                status = "FAILED"
+
+            table.add_row(
+                r.get("name"),
+                status,
+                str(r.get("current")),
+                str(r.get("capacity")),
+                Bar(size=100, begin=0, end=percent, color=style)
+            )
+
+        return table
 
 class CheckReports:
     def __init__(self):
         self.readiness_reports: list[ReadinessCheckReport] = []
         self.snapshot_reports: list[SnapshotReport] = []
+        self.capacity_reports: list[CapacityReport] = []
 
     def add_readiness_report(self, report: ReadinessCheckReport):
         self.readiness_reports.append(report)
 
     def add_snapshot_report(self, report: SnapshotReport):
         self.snapshot_reports.append(report)
+
+    def add_capacity_report(self, report: CapacityReport):
+        self.capacity_reports.append(report)
 
     @property
     def failed_reports(self):
@@ -152,7 +225,7 @@ class CheckReports:
 
     @property
     def reports(self):
-        return self.snapshot_reports + self.readiness_reports
+        return self.snapshot_reports + self.readiness_reports + self.capacity_reports
 
     def counts_as_table(self) -> list[list[str | int]]:
         table = [
@@ -198,6 +271,7 @@ class CheckReports:
 
         list_table = report.checks_as_table()
         table = Table(
+            title="Readiness (pre-check) report",
             caption=f"READINESS Checks were ran at {report.datetime.isoformat()}"
         )
         for c in list_table[0]:
@@ -217,6 +291,7 @@ class CheckReports:
         if not report:
             return f"[yellow]No Snapshot report found for {device_str}[/yellow]"
         table = Table(
+            title="Snapshot report",
             caption=f"SNAPSHOT Report was ran at {report.datetime.isoformat()}"
         )
         table_list = report.checks_as_table()
@@ -232,6 +307,13 @@ class CheckReports:
             table.add_row(*new_row_items, style=style)
 
         return table
+
+    def device_capacity_report_as_rich_table(self, device_str: str):
+        report: CapacityReport = self.get_latest_report_by_device(device_str, self.capacity_reports)
+        if not report:
+            return f"[yellow]No Capacity report found for {device_str}[/yellow]"
+
+        return report.data_as_rich_table()
 
 
 def details_from_filename(filename: str) -> tuple[str, str, str]:
@@ -277,6 +359,13 @@ def generate_reports_from_store(store_path: pathlib.Path):
                     report=json.load(open(file)),
                 )
                 reports.add_snapshot_report(report)
+            elif check_type == ReportTypeEnum.capacity:
+                report = CapacityReport(
+                    timestamp=timestamp,
+                    device=device,
+                    report=json.load(open(file)),
+                )
+                reports.add_capacity_report(report)
 
     return reports
 
