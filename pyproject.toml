@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "upgrade-assurance-cli"
-version = "1.0.0"
+version = "1.0.1"
 description = "Upgrade Assurance CLI Tool"
 authors = ["Adam Baumeister <abaumeister@paloaltonetworks.com>"]
 readme = "README.md"
