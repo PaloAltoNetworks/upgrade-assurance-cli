@@ -17,7 +17,7 @@ requests = "^2.33.0"
 [tool.semantic_release]
 # Specifies where PSR should read and write the version number
 version_toml = ["pyproject.toml:tool.poetry.version"]
-build_command = "python -m build --sdist --wheel ."
+build_command = "pip install poetry && poetry install --no-root && poetry build"
 
 [tool.poetry.group.dev.dependencies]
 black = "^26.3.1"
