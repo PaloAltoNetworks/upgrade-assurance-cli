@@ -1,6 +1,93 @@
 pre_checks:
+  - "active_support"
+  - "candidate_config"
+  - "expired_licenses"
+  - "jobs"
   - "ntp_sync"
-  - "session_exist"
+  - "panorama"
+  # tests below have optional configuration
+  - certificates_requirements:
+      ecdsa:
+        hash_method: "sha512"
+      rsa:
+        key_size: 1024
+        hash_method: "sha1"
+  - content_version:
+      version: "8634-7678"
+  - dp_cpu_utilization:
+      threshold: 50
+      minutes: 2
+  - dynamic_updates:
+      test_window: 120
+  - expired_licenses:
+      skip_licenses:
+        - "Threat Prevention"
+  - free_disk_space:
+      image_version: "10.1.6-h6"
+  - ha:
+      skip_config_sync: true
+  - mp_cpu_utilization:
+      threshold: 40
+  - planes_clock_sync:
+      diff_threshold: 30
+  # tests below require additional configuration
+  - arp_entry_exist:
+      ip: "10.0.1.1"
+  - ip_sec_tunnel_status:
+      tunnel_name: "ipsec_tun"
+  - session_exist:
+      source: "134.238.135.137"
+      destination: "10.1.0.4"
+      dest_port: "80"
 snapshot_comparison_config:
-  - "routes"
-  - "are_routes"
+  - ip_sec_tunnels:
+      properties:
+        - "state"
+  - arp_table:
+      properties:
+        - "!ttl"
+      count_change_threshold: 10
+  - nics:
+      count_change_threshold: 10
+  - license:
+      properties:
+        - "!serial"
+  - routes:
+      properties:
+        - "!flags"
+      count_change_threshold: 10
+  - fib_routes:
+      properties:
+        - "!flags"
+      count_change_threshold: 10
+  - are_routes:
+      properties:
+        - "!uptime"
+        - "!internalNextHopNum"
+      count_change_threshold: 10
+  - are_fib_routes:
+      properties:
+        - "!flags"
+      count_change_threshold: 10
+  - bgp_peers:
+      properties:
+        - "status"
+  - content_version
+  - session_stats:
+      thresholds:
+        - num-max: 10
+        - num-tcp: 10
+  - mtu
+snapshot_config:
+ - routes
+ - nics
+ - are_fib_routes
+ - arp_table
+ - license
+ - fib_routes
+ - are_routes
+ - are_fib_routes
+ - bgp_peers
+ - content_version
+ - session_stats
+ - mtu
