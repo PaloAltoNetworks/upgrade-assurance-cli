@@ -304,7 +304,7 @@ class CheckReports:
             style = "green"
             if not r[1]:
                 style = "bold red"
-            new_row_items = [str(i) for i in r]
+            new_row_items = [r[0]] + ["PASSED" if i else "FAILED" for i in r[1:]]
 
             table.add_row(*new_row_items, style=style)
 
