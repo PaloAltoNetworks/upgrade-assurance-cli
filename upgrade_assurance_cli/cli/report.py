@@ -324,7 +324,7 @@ def details_from_filename(filename: str) -> tuple[str, str, str]:
     """Gets the device name, the check type and the timestamp based on the filename."""
     filename = filename.replace(".json", "")
     check_type, device, timestamp = filename.split("_")
-    return check_type, device, timestamp
+    return check_type, device.replace("-", ":"), timestamp
 
 
 def read_snapshot_report(path: pathlib.Path):
