@@ -6,7 +6,11 @@ from panos.firewall import Firewall
 from panos.panorama import Panorama
 from pydantic import BaseModel, Field
 
-from upgrade_assurance_cli.cli.capacity import RunningCapacityDetails, SessionDetails, get_capacity_details
+from upgrade_assurance_cli.cli.capacity import (
+    RunningCapacityDetails,
+    SessionDetails,
+    get_capacity_details,
+)
 from upgrade_assurance_cli.cli.utils import log, ENCODING
 from panos_upgrade_assurance.firewall_proxy import FirewallProxy
 from panos_upgrade_assurance.check_firewall import CheckFirewall
@@ -116,15 +120,17 @@ def get_snapshots_on_device(exec_arguments: CheckExecutionArgs):
     except Exception as e:
         file_log.critical(f"Snapshot failed!", exc_info=True)
 
+
 class FetchError(Exception):
     pass
+
 
 def get_current_statistics(firewall: FirewallProxy) -> RunningCapacityDetails:
     """Retrieves the operational statistics from the firewall, specifically:
 
-        * Session count
-        * Sessions per second
-        * Throughput per second (as BPS)
+    * Session count
+    * Sessions per second
+    * Throughput per second (as BPS)
     """
     system_info: dict = firewall.op_parser("show system info").get("system")
     if not system_info:
@@ -138,11 +144,12 @@ def get_current_statistics(firewall: FirewallProxy) -> RunningCapacityDetails:
         session_details=SessionDetails(**session_info),
     )
 
+
 def get_current_capacity_statistics_from_device(exec_arguments: CheckExecutionArgs):
     """Retrieves the current running statsitics from the device related to capacity, such as session stats etc."""
     check_firewall, file_log = setup_for_checks(exec_arguments)
     file_log.info(f"{exec_arguments.device_str} - Taking capacity limits")
-    firewall =  check_firewall._node
+    firewall = check_firewall._node
 
     try:
         output_file = exec_arguments.output_file
@@ -152,7 +159,9 @@ def get_current_capacity_statistics_from_device(exec_arguments: CheckExecutionAr
         with open(output_file, "w", encoding=ENCODING) as fh:
             json.dump(limits.compare_with_running(current).model_dump(), fh, indent=4)
 
-        file_log.info(f"{exec_arguments.device_str} - Writing capacity results to file {output_file}")
+        file_log.info(
+            f"{exec_arguments.device_str} - Writing capacity results to file {output_file}"
+        )
     except Exception as e:
         file_log.critical(f"Retrieving current statistics failed!", exc_info=True)
 

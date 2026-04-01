@@ -26,7 +26,8 @@ from upgrade_assurance_cli.cli.report import (
 from upgrade_assurance_cli.cli.runner import (
     pooled_run_readiness_checks_on_devices,
     CheckExecutionArgs,
-    pooled_run_snapshot_checks_on_devices, pooled_run_capacity_checks_on_devices,
+    pooled_run_snapshot_checks_on_devices,
+    pooled_run_capacity_checks_on_devices,
 )
 from upgrade_assurance_cli.cli.utils import (
     log,
@@ -358,8 +359,7 @@ def capacity(
         int, Option(help="Number of concurrent connections to make")
     ] = 2,
 ):
-    """Retrieves capacity statistics about the running devices, such as session count, and produces a report. This is useful to determine overall system utilization with hardware limits.
-    """
+    """Retrieves capacity statistics about the running devices, such as session count, and produces a report. This is useful to determine overall system utilization with hardware limits."""
     os.makedirs(store_path, exist_ok=True)
 
     device_list = get_devices_from_argument(device)
