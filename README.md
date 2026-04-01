@@ -3,8 +3,10 @@
 This project is a simple CLI wrapper around the [PAN-OS Upgrade Assurance](https://github.com/PaloAltoNetworks/pan-os-upgrade-assurance)
  library.
 
-<p>
-<img src="https://badge.fury.io/py/upgrade-assurance-cli.svg"/>
+<p align="center">
+<img src="https://badge.fury.io/py/upgrade-assurance-cli.svg" alt="PyPi Package"/>
+<img src="https://github.com/PaloAltoNetworks/upgrade-assurance-cli/actions/workflows/ci.yaml/badge.svg" alt="Tests"/>
+<img src="https://img.shields.io/pypi/dd/upgrade-assurance-cli" alt="Downloads"/>
 </p>
 
 
