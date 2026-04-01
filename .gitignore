@@ -68,3 +68,4 @@ snapshots
 store
 backups
 devices.txt
+.env
