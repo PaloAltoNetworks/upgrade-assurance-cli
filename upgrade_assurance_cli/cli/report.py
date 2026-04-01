@@ -99,6 +99,7 @@ class ReadinessCheckReport:
             table.append([k, state, status, reason])
         return table
 
+
 class CapacityReport:
     def __init__(
         self,
@@ -121,18 +122,18 @@ class CapacityReport:
     @property
     def count_failed_checks(self):
         results = self.results
-        return len([i for i in results if i.get("percent") >= self.threshold ])
+        return len([i for i in results if i.get("percent") >= self.threshold])
 
     @property
     def count_passed_checks(self):
         results = self.results
-        return len([i for i in results if i.get("percent") < self.threshold ])
+        return len([i for i in results if i.get("percent") < self.threshold])
 
     def data_as_rich_table(self):
         table = Table(
             title="Device Capacity",
             show_header=True,
-            caption=f"Capacity measured at {self.datetime.isoformat()}"
+            caption=f"Capacity measured at {self.datetime.isoformat()}",
         )
 
         table.add_column("test")
@@ -147,7 +148,7 @@ class CapacityReport:
             style = "yellow"
 
             if percent == 0:
-                percent = 1 # Make it so it renders some bar anyway, just so it doesn't look broken
+                percent = 1  # Make it so it renders some bar anyway, just so it doesn't look broken
                 style = "cyan"
 
             if percent >= self.threshold:
@@ -159,10 +160,11 @@ class CapacityReport:
                 status,
                 str(r.get("current")),
                 str(r.get("capacity")),
-                Bar(size=100, begin=0, end=percent, color=style)
+                Bar(size=100, begin=0, end=percent, color=style),
             )
 
         return table
+
 
 class CheckReports:
     def __init__(self):
@@ -272,7 +274,7 @@ class CheckReports:
         list_table = report.checks_as_table()
         table = Table(
             title="Readiness (pre-check) report",
-            caption=f"READINESS Checks were ran at {report.datetime.isoformat()}"
+            caption=f"READINESS Checks were ran at {report.datetime.isoformat()}",
         )
         for c in list_table[0]:
             table.add_column(c)
@@ -292,7 +294,7 @@ class CheckReports:
             return f"[yellow]No Snapshot report found for {device_str}[/yellow]"
         table = Table(
             title="Snapshot report",
-            caption=f"SNAPSHOT Report was ran at {report.datetime.isoformat()}"
+            caption=f"SNAPSHOT Report was ran at {report.datetime.isoformat()}",
         )
         table_list = report.checks_as_table()
         for header in table_list[0]:
@@ -309,7 +311,9 @@ class CheckReports:
         return table
 
     def device_capacity_report_as_rich_table(self, device_str: str):
-        report: CapacityReport = self.get_latest_report_by_device(device_str, self.capacity_reports)
+        report: CapacityReport = self.get_latest_report_by_device(
+            device_str, self.capacity_reports
+        )
         if not report:
             return f"[yellow]No Capacity report found for {device_str}[/yellow]"
 

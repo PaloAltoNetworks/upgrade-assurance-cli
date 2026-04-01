@@ -79,19 +79,17 @@ class ResponseDataItem(BaseModel):
     def calc_percentage(x, y):
         return int((x / y) * 100)
 
-    def compare_with_running(
-            self,
-            running_capacity_statistics: RunningCapacityDetails
-    ):
+    def compare_with_running(self, running_capacity_statistics: RunningCapacityDetails):
         results = [
             CapacityComparisonResult(
                 name="throughput_utilization_mbps",
                 percent=self.calc_percentage(
                     # Note conversion of kbps reported by device to mbps as stored by statistics
                     running_capacity_statistics.session_details.throughput_kbps / 1000,
-                    self.app_id_throughput_mbps
+                    self.app_id_throughput_mbps,
                 ),
-                current=running_capacity_statistics.session_details.throughput_kbps / 1000,
+                current=running_capacity_statistics.session_details.throughput_kbps
+                / 1000,
                 capacity=self.app_id_throughput_mbps,
             ),
             CapacityComparisonResult(
@@ -99,21 +97,21 @@ class ResponseDataItem(BaseModel):
                 percent=self.calc_percentage(
                     # Note conversion of kbps reported by device to mbps as stored by statistics
                     running_capacity_statistics.session_details.total_sessions,
-                    self.maximum_sessions_total
+                    self.maximum_sessions_total,
                 ),
                 current=running_capacity_statistics.session_details.total_sessions,
-                capacity=self.maximum_sessions_total
+                capacity=self.maximum_sessions_total,
             ),
             CapacityComparisonResult(
                 name="connections_per_second_utilization",
                 percent=self.calc_percentage(
                     # Note conversion of kbps reported by device to mbps as stored by statistics
                     running_capacity_statistics.session_details.connections_per_second,
-                    self.connections_per_second
+                    self.connections_per_second,
                 ),
                 current=running_capacity_statistics.session_details.connections_per_second,
-                capacity=self.connections_per_second
-            )
+                capacity=self.connections_per_second,
+            ),
         ]
         return CapacityComparisonResults(results=results)
 
@@ -124,26 +122,25 @@ class ResponseData(BaseModel):
     def get_limits_by_model(self, model: str):
         """Return the limits and details of a given model, by item"""
         try:
-            return next(
-                i for i in self.items if i.product_name == model
-            )
+            return next(i for i in self.items if i.product_name == model)
         except StopIteration:
             return None
 
-    def compare_with_running(
-            self,
-            running_capacity_statistics: RunningCapacityDetails
-    ):
+    def compare_with_running(self, running_capacity_statistics: RunningCapacityDetails):
         limits = self.get_limits_by_model(running_capacity_statistics.model)
         if limits:
             return limits.compare_with_running(running_capacity_statistics)
 
-        raise ComparisonError(f"Could not find model {running_capacity_statistics.model} in total capacity details")
+        raise ComparisonError(
+            f"Could not find model {running_capacity_statistics.model} in total capacity details"
+        )
 
 
 def get_capacity_details():
     """Pulls capacity details from the public PAN-OS hardware matrix API"""
-    log.info("Retrieving capacity details from https://www.paloaltonetworks.com/products/product-selection.html#")
+    log.info(
+        "Retrieving capacity details from https://www.paloaltonetworks.com/products/product-selection.html#"
+    )
     url = "https://www.paloaltonetworks.com/apps/pan/public/solr/proxy?facet=true&corename=productcompare&q=*:*&facet.field=1-0-3-1_dfi&facet.field=5-0-7-1_dfi&facet.field=5-0-9-1_dfi&facet.field=5-0-12-1_dfi&facet.field=14-0-16-1_dfi&facet.sort=count&facet.limit=20&facet.mincount=1&fq=language:%22en_US%22&sort=position%20asc&rows=100&wt=json"
     response = requests.get(url)
     # This is so ugly but seems like the only way we can return it
