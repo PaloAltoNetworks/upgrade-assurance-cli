@@ -1,7 +1,12 @@
-# Upgrade Assurance CLI Tool
+# upgrade-assurance-cli — Test and Backup your PAN-OS Environment
 
 This project is a simple CLI wrapper around the [PAN-OS Upgrade Assurance](https://github.com/PaloAltoNetworks/pan-os-upgrade-assurance)
  library.
+
+<p>
+<img src="https://badge.fury.io/py/upgrade-assurance-cli.svg"/>
+</p>
+
 
 
 ## Installation
