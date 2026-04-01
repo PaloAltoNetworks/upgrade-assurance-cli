@@ -1,8 +1,25 @@
-# Upgrade Assurance CLI Tool
+# upgrade-assurance-cli — Test and Backup your PAN-OS Environment
 
-This project is a simple CLI wrapper around the [PAN-OS Upgrade Assurance](https://github.com/PaloAltoNetworks/pan-os-upgrade-assurance)
- library.
+<p align="center">
+<img src="https://badge.fury.io/py/upgrade-assurance-cli.svg" alt="PyPi Package"/>
+<img src="https://github.com/PaloAltoNetworks/upgrade-assurance-cli/actions/workflows/ci.yaml/badge.svg" alt="Tests"/>
+<img src="https://img.shields.io/pypi/pyversions/upgrade-assurance-cli" alt="Supported Python versions"/>
+<img src="https://img.shields.io/github/license/paloaltonetworks/upgrade-assurance-cli" alt="Supported Python versions"/>
+</p>
 
+## Overview: What is `upgrade-assurance-cli`? 
+
+upgrade-assurance-cli is a tool for interacting with the library of tests written and maintained by Palo Alto Networks
+Professional Services, known as [Upgrade Assurance](https://github.com/PaloAltoNetworks/pan-os-upgrade-assurance).
+
+This library, when implemented by the upgrade-assurance-cli tool, provide a way for users to:
+
+* Validate their PAN-OS environment is in an ok state before making any changes
+* Take configuration backups in preparation for changes
+* Compare their environment before and after those changes
+
+Originally this tool was written explicitly for testing software upgrades, hence the name, but the methodology can
+be applied to any PAN-OS changes.
 
 ## Installation
 
