@@ -48,7 +48,7 @@ DEFAULT_READINESS_CHECKS = [
     "mp_cpu_utilization",
     "mp_mem_utilization",
     "config_locks",
-    "planes_clock_sync"
+    "planes_clock_sync",
 ]
 
 
