@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.1.1 (2026-04-22)
+
+### Bug Fixes
+
+- Force release due to bad commit message
+  ([`b7839e2`](https://github.com/PaloAltoNetworks/upgrade-assurance-cli/commit/b7839e28a78af8f0370f143883b46a94acc7f3d2))
+
+### Chores
+
+- Readme improvements
+  ([`c112c60`](https://github.com/PaloAltoNetworks/upgrade-assurance-cli/commit/c112c6024367fb5acfe4a2b0cd563cc78729597f))
+
+
 ## v1.1.0 (2026-04-01)
 
 ### Bug Fixes
