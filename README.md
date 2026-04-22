@@ -250,3 +250,4 @@ snapshot_config:
 
 For a full list of checks and al their configuration options view the 
 [Upgrade Assurance Documentation site.](https://pan.dev/panos/docs/panos-upgrade-assurance/configuration-details/)
+
