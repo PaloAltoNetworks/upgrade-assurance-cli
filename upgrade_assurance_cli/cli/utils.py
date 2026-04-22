@@ -46,7 +46,9 @@ DEFAULT_READINESS_CHECKS = [
     "global_jumbo_frame",
     "dp_cpu_utilization",
     "mp_cpu_utilization",
-    # "planes_clock_sync" # Currently bugged on some platforms
+    "mp_mem_utilization",
+    "config_locks",
+    "planes_clock_sync",
 ]
 
 
