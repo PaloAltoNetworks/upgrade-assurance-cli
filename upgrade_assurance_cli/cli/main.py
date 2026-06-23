@@ -319,7 +319,7 @@ def backup(
     ] = 10,
     tech_support_generation_timeout: Annotated[
         int, Option(help="Timeout for tech support generation - Tech support only")
-    ] = 300
+    ] = 300,
 ):
     """Backup the configuration of one or more devices to the provided backup_path."""
     os.makedirs(backup_path, exist_ok=True)
@@ -339,7 +339,7 @@ def backup(
             ),
             export_type=export_type,
             tech_support_generation_timeout=tech_support_generation_timeout,
-            tech_support_generation_check_interval=tech_support_generation_check_interval
+            tech_support_generation_check_interval=tech_support_generation_check_interval,
         )
         for d in device_list
     ]
