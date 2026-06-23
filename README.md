@@ -85,6 +85,12 @@ Backup the configuration device-state
 assurance-cli backup myfirewall.com --export-type device-state
 ```
 
+Create and export a tech-support file. **Note: Does not support Panorama-proxied API connections**
+
+```shell
+assurance-cli backup myfirewall.com --export-type tech-support
+```
+
 ## Configuration
 
 ### Report storage

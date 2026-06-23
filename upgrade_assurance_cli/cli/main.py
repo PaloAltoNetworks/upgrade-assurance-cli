@@ -327,7 +327,9 @@ def backup(
             password=password,
             hostname=d,
             output_file=backup_path.joinpath(
-                f"backup_{d}_{timestamp}".replace(":", "-")
+                f"{export_type.value.replace('-', '_')}_{d}_{timestamp}".replace(
+                    ":", "-"
+                )
             ),
             export_type=export_type,
         )
