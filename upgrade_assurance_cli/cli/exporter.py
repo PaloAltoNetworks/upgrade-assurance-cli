@@ -32,12 +32,16 @@ class ExporterArguments:
         hostname,
         output_file,
         export_type=BackupTypeEnum.configuration,
+        tech_support_generation_timeout: int = 300,
+        tech_support_generation_check_interval: int = 10,
     ):
         self.output_file = output_file
         self.username = username
         self.password = password
         self.hostname = hostname
         self.export_type = export_type
+        self.tech_support_generation_timeout = tech_support_generation_timeout
+        self. tech_support_generation_check_interval = tech_support_generation_check_interval
 
     @property
     def device_str(self):
@@ -123,7 +127,7 @@ def generate_tech_support_file(
 
     job_id = job_id.text
 
-    file_log.info(f"Started generation with job id {job_id}")
+    file_log.info(f"Started generation with job id {job_id}: Check interval: {check_interval}, timeout: {timeout}")
 
     try:
         get_and_wait_for_job(firewall._fw, job_id, file_log, check_interval, timeout)
@@ -191,7 +195,12 @@ def export_config(exec_arguments: ExporterArguments):
         except PanDeviceNotSet:
             pass
 
-        job_id = generate_tech_support_file(firewall, file_log)
+        job_id = generate_tech_support_file(
+            firewall,
+            file_log,
+            timeout=exec_arguments.tech_support_generation_timeout,
+            check_interval=exec_arguments.tech_support_generation_check_interval
+        )
         if not job_id:
             log.critical(
                 f"Could not export {exec_arguments.export_type.value} from device."
