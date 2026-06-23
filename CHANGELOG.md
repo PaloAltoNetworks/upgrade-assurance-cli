@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v1.2.0 (2026-06-23)
+
+### Features
+
+- Users can now export tech-support files
+  ([#13](https://github.com/PaloAltoNetworks/upgrade-assurance-cli/pull/13),
+  [`7e0642e`](https://github.com/PaloAltoNetworks/upgrade-assurance-cli/commit/7e0642ec91430652b99bad911cbced0ca9615c4c))
+
+
 ## v1.1.1 (2026-04-22)
 
 ### Bug Fixes
