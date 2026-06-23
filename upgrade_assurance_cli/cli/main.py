@@ -314,6 +314,12 @@ def backup(
     parallel: Annotated[
         int, Option(help="Number of concurrent connections to make")
     ] = 2,
+    tech_support_generation_check_interval: Annotated[
+        int, Option(help="Job status check interval, in seconds - Tech support only")
+    ] = 10,
+    tech_support_generation_timeout: Annotated[
+        int, Option(help="Timeout for tech support generation - Tech support only")
+    ] = 300,
 ):
     """Backup the configuration of one or more devices to the provided backup_path."""
     os.makedirs(backup_path, exist_ok=True)
@@ -327,9 +333,13 @@ def backup(
             password=password,
             hostname=d,
             output_file=backup_path.joinpath(
-                f"backup_{d}_{timestamp}".replace(":", "-")
+                f"{export_type.value.replace('-', '_')}_{d}_{timestamp}".replace(
+                    ":", "-"
+                )
             ),
             export_type=export_type,
+            tech_support_generation_timeout=tech_support_generation_timeout,
+            tech_support_generation_check_interval=tech_support_generation_check_interval,
         )
         for d in device_list
     ]

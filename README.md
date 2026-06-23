@@ -85,6 +85,12 @@ Backup the configuration device-state
 assurance-cli backup myfirewall.com --export-type device-state
 ```
 
+Create and export a tech-support file. **Note: Does not support Panorama-proxied API connections**
+
+```shell
+assurance-cli backup myfirewall.com --export-type tech-support
+```
+
 ## Configuration
 
 ### Report storage
@@ -109,7 +115,7 @@ reports and artifacts:
 
 This tool allows you to run against multiple devices at once using `multiprocessing`.
 
-Multiple devices can be passed to the comand line as arguments to the `readiness` and `snapshot` commands.
+Multiple devices can be passed to the command line as arguments to the `readiness` and `snapshot` commands.
 
 ```shell
 assurance-cli readiness myfirstfirewall.com mysecondfirewall.com 

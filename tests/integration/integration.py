@@ -1,3 +1,6 @@
+import logging
+from xml.etree.ElementTree import tostring
+
 import pytest
 import os
 
@@ -44,3 +47,17 @@ def test_get_firewall_statistics_and_compare(firewall_fixture):
     limits = get_capacity_details()
     result = limits.compare_with_running(current)
     print(result.model_dump_json(indent=4))
+
+def test_dump_tech_support_file(firewall_fixture):
+    from upgrade_assurance_cli.cli.exporter import generate_tech_support_file
+    generate_tech_support_file(firewall_fixture, logging.getLogger("tests"))
+
+def test_get_and_wait_for_job(firewall_fixture):
+    from upgrade_assurance_cli.cli.exporter import get_and_wait_for_job
+    result = get_and_wait_for_job(firewall_fixture, "27959", logging.getLogger("tests"), check_interval=1)
+    print(tostring(result))
+
+def test_download_tech_support_file(firewall_fixture):
+    from upgrade_assurance_cli.cli.exporter import download_tech_support_file
+    result = download_tech_support_file(firewall_fixture, "27959", "tech_support.tgz")
+    print(result)
