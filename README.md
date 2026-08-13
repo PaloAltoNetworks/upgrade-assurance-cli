@@ -73,6 +73,39 @@ Compare two snapshots
 assurance-cli compare-snapshots <first-snapshot-path> <second-snapshot-path>
 ```
 
+### Example report output
+
+The `report` command summarizes the results currently stored in the results
+directory. For example, a stored readiness report with ten failed checks and
+seven passed checks produces the following output:
+
+```console
+$ assurance-cli report
+┏━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┓
+┃ timestamp           ┃ report_type ┃ device  ┃ failed_checks_count ┃ passed_checks_count ┃
+┡━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━┩
+│ 2026-03-18T08:01:33 │ readiness   │ 1.1.1.1 │ 10                  │ 7                   │
+└─────────────────────┴─────────────┴─────────┴─────────────────────┴─────────────────────┘
+❌ Some devices failed checks!
+```
+
+Pass `--device` to inspect the most recent result for one device. This abridged
+example shows both successful and failed readiness checks:
+
+```console
+$ assurance-cli report --device 1.1.1.1
+                          Readiness (pre-check) report
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ check_name       ┃ passed ┃ check_status ┃ reason                                                       ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ active_support   │ True   │ SUCCESS      │                                                              │
+│ dynamic_updates  │ False  │ FAIL         │ Following schedules fall into test window: anti-virus        │
+│                  │        │              │ (every hour), wildfire (every hour).                          │
+│ ...              │ ...    │ ...          │ ...                                                          │
+│ candidate_config │ False  │ FAIL         │ Pending changes found on device.                             │
+└──────────────────┴────────┴──────────────┴──────────────────────────────────────────────────────────────┘
+```
+
 Backup the configuration running-configuration
 
 ```shell
@@ -256,4 +289,3 @@ snapshot_config:
 
 For a full list of checks and al their configuration options view the 
 [Upgrade Assurance Documentation site.](https://pan.dev/panos/docs/panos-upgrade-assurance/configuration-details/)
-
